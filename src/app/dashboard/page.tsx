@@ -16,25 +16,25 @@ export default function DashboardPage() {
       userName="Admin Demo"
       enabledModules={["PACIENTES", "TURNOS", "ESTUDIOS", "FACTURACION"]}
     >
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="flex flex-col gap-4 rounded-xl border border-border bg-background p-5"
+            className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-bento"
           >
-            <span className={`flex h-11 w-11 items-center justify-center rounded-full ${stat.tint}`}>
-              <stat.icon className="h-5 w-5" />
+            <span className={`flex h-9 w-9 items-center justify-center rounded-full ${stat.tint}`}>
+              <stat.icon className="h-4 w-4" />
             </span>
             <div>
-              <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-              <p className="text-sm text-muted-foreground">{stat.label}</p>
+              <p className="text-xl font-bold text-foreground">{stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="mt-6 rounded-xl border border-border bg-background p-6">
-        <h2 className="text-lg font-bold text-foreground">Próximos turnos</h2>
+      <div className="mt-4 rounded-xl border border-border bg-card p-5 shadow-bento">
+        <h2 className="text-base font-bold text-foreground">Próximos turnos</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Acá va a aparecer la agenda del día una vez que conectemos el módulo de Turnos.
         </p>

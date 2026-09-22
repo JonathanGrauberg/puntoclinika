@@ -14,7 +14,7 @@ export function Topbar({
   userName: string;
 }) {
   return (
-    <header className="flex items-center justify-between rounded-2xl border border-border bg-card px-5 py-4 shadow-bento">
+    <header className="flex items-center justify-between py-1">
       <div className="flex items-center gap-3">
         <Tooltip>
           <TooltipTrigger asChild>
@@ -22,21 +22,21 @@ export function Topbar({
               type="button"
               onClick={onOpenMenu}
               aria-label="Abrir menú"
-              className="flex h-11 w-11 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-muted lg:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-foreground transition-colors hover:bg-muted lg:hidden"
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4 w-4" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="bottom">Menú</TooltipContent>
         </Tooltip>
-        <h1 className="text-xl font-bold text-foreground sm:text-2xl">{title}</h1>
+        <h1 className="text-lg font-bold text-foreground sm:text-xl">{title}</h1>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <ThemeToggle />
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
               {userName
                 .split(" ")
                 .slice(0, 2)

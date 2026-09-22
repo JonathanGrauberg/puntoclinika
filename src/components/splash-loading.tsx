@@ -15,15 +15,15 @@ export function SplashLoading() {
   useEffect(() => setMounted(true), []);
 
   const logoSrc =
-    mounted && resolvedTheme === "dark" ? "/brand/logo-dark.png" : "/brand/logo-light.png";
+    mounted && resolvedTheme === "dark" ? "/brand/logo-blanco.png" : "/brand/logo-negro.png";
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center gap-6 bg-background">
       <Image
         src={logoSrc}
         alt=".clinika"
-        width={200}
-        height={56}
+        width={930}
+        height={230}
         priority
         className="h-auto w-40 sm:w-48"
       />

@@ -28,7 +28,7 @@
     --border: 240 8% 87%;
     --ring: 168 58% 30%;
 
-    --radius: 1.75rem;
+    --radius: 1.25rem;
   }
 
   :root[data-theme="dark"] {
@@ -71,8 +71,8 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    /* Base 17px: la mayor parte de los usuarios (pacientes, médicos) son
-       adultos, muchos mayores — arrancamos más grande que el default de 16px. */
-    font-size: 17px;
+    /* Base 16px: buen piso de legibilidad para adultos mayores sin
+       infla la densidad de la UI (ver feedback: todo quedaba muy grande). */
+    font-size: 16px;
   }
 }
