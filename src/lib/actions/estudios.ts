@@ -26,6 +26,7 @@ const estudioSchema = z.object({
   practicaId: z.string().min(1, "Elegí una práctica"),
   modalidad: z.string().trim().max(60).optional(),
   key: z.string().min(1, "Falta subir el archivo"),
+  informeKey: z.string().optional(),
   turnoId: z.string().optional(),
 });
 
@@ -50,6 +51,7 @@ export async function crearEstudio(formData: FormData): Promise<EstudioFormState
         turnoId: data.turnoId || null,
         modalidad: data.modalidad || null,
         archivoUrl: data.key,
+        informeArchivoUrl: data.informeKey || null,
       },
     });
     await audit(tx, {
@@ -68,6 +70,7 @@ export async function crearEstudio(formData: FormData): Promise<EstudioFormState
 
 const informeSchema = z.object({
   informeTexto: z.string().trim().min(1, "El informe no puede estar vacío").max(5000),
+  informeKey: z.string().optional(),
 });
 
 export async function informarEstudio(id: string, formData: FormData): Promise<EstudioFormState | void> {
@@ -90,6 +93,7 @@ export async function informarEstudio(id: string, formData: FormData): Promise<E
       where: { id },
       data: {
         informeTexto: parsed.data.informeTexto,
+        ...(parsed.data.informeKey ? { informeArchivoUrl: parsed.data.informeKey } : {}),
         estado: "INFORMADO",
         informadoPorId: miProfesionalId,
         informadoEn: new Date(),
@@ -153,15 +157,17 @@ export async function obtenerEstudio(id: string) {
   });
 }
 
-/** Genera la URL firmada para ver/descargar el archivo y deja registro de auditoría del acceso. */
-export async function obtenerUrlDescarga(id: string) {
+/** Genera la URL firmada para ver/descargar el archivo (estudio o informe adjunto) y audita el acceso. */
+export async function obtenerUrlDescarga(id: string, tipo: "estudio" | "informe" = "estudio") {
   const session = await requireSession();
 
   const estudio = await withTenantContext(session.tenantId, (tx) =>
     tx.estudio.findUniqueOrThrow({ where: { id } })
   );
 
-  const url = await crearUrlDescargaEstudio(estudio.archivoUrl!);
+  const key = tipo === "informe" ? estudio.informeArchivoUrl : estudio.archivoUrl;
+  if (!key) throw new Error("Ese archivo no existe.");
+  const url = await crearUrlDescargaEstudio(key);
 
   await withTenantContext(session.tenantId, (tx) =>
     auditView(tx, {
@@ -169,7 +175,7 @@ export async function obtenerUrlDescarga(id: string) {
       userId: session.userId,
       entidad: "Estudio",
       entidadId: id,
-      detalle: { accion: "descarga" },
+      detalle: { accion: "descarga", tipo },
     })
   );
 

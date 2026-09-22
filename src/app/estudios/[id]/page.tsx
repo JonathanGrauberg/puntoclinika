@@ -58,6 +58,18 @@ export default async function EstudioDetallePage({ params }: { params: Promise<{
             </dl>
           </div>
 
+          {estudio.informeArchivoUrl && (
+            <div className="rounded-md border border-border bg-card p-5">
+              <h2 className="mb-3 text-sm font-semibold text-foreground">Informe adjunto</h2>
+              <EstudioViewer
+                estudioId={estudio.id}
+                archivoKey={estudio.informeArchivoUrl}
+                tipo="informe"
+                alto="40vh"
+              />
+            </div>
+          )}
+
           {estudio.estado === "INFORMADO" ? (
             <div className="rounded-md border border-border bg-card p-5">
               <h2 className="mb-3 text-sm font-semibold text-foreground">Informe</h2>

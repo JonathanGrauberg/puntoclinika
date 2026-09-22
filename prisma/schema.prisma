@@ -247,6 +247,10 @@ model Estudio {
   pacienteId       String
   practicaId       String
   archivoUrl       String?
+  // Adjunto opcional: un PDF de informe externo (ej: ya viene firmado de
+  // otro sistema o dictado). Independiente de informeTexto, que es lo que
+  // el médico escribe y firma acá mismo — pueden coexistir los dos.
+  informeArchivoUrl String?
   modalidad        String?
   estado           EstadoEstudio @default(PENDIENTE)
   informadoPorId   String?

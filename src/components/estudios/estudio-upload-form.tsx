@@ -15,6 +15,17 @@ const inputClass =
   "h-11 rounded-md border border-border bg-background px-3 text-[15px] text-foreground outline-none focus:border-foreground";
 const labelClass = "text-sm font-semibold text-foreground";
 
+async function subirArchivo(archivo: File) {
+  const { key, url } = await crearUrlSubida(archivo.name, archivo.type || "application/octet-stream");
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: { "Content-Type": archivo.type || "application/octet-stream" },
+    body: archivo,
+  });
+  if (!res.ok) throw new Error("No se pudo subir el archivo");
+  return key;
+}
+
 export function EstudioUploadForm({
   pacientes,
   practicas,
@@ -26,12 +37,13 @@ export function EstudioUploadForm({
   const [state, setState] = useState<EstudioFormState>({});
   const [pacienteId, setPacienteId] = useState("");
   const [archivo, setArchivo] = useState<File | null>(null);
+  const [archivoInforme, setArchivoInforme] = useState<File | null>(null);
   const [subiendo, setSubiendo] = useState<"idle" | "subiendo" | "creando">("idle");
   const formRef = useRef<HTMLFormElement>(null);
 
   function handleSubmit(formData: FormData) {
     if (!archivo) {
-      setState({ error: "Elegí un archivo para subir." });
+      setState({ error: "Elegí el archivo del estudio." });
       return;
     }
     setState({});
@@ -39,17 +51,12 @@ export function EstudioUploadForm({
     startTransition(async () => {
       try {
         setSubiendo("subiendo");
-        const { key, url } = await crearUrlSubida(archivo.name, archivo.type || "application/octet-stream");
-
-        const res = await fetch(url, {
-          method: "PUT",
-          headers: { "Content-Type": archivo.type || "application/octet-stream" },
-          body: archivo,
-        });
-        if (!res.ok) throw new Error("No se pudo subir el archivo");
+        const key = await subirArchivo(archivo);
+        const informeKey = archivoInforme ? await subirArchivo(archivoInforme) : "";
 
         setSubiendo("creando");
         formData.set("key", key);
+        formData.set("informeKey", informeKey);
         const result = await crearEstudio(formData);
         if (result?.error) setState(result);
       } catch {
@@ -99,8 +106,22 @@ export function EstudioUploadForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className={labelClass}>Archivo (imagen o PDF) *</label>
+        <label className={labelClass}>Estudio (imagen o PDF) *</label>
         <FileDropzone accept="image/*,application/pdf" archivo={archivo} onChange={setArchivo} disabled={pendiente} />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className={labelClass}>Informe adjunto (opcional)</label>
+        <p className="text-xs text-muted-foreground">
+          Si ya tenés un informe en PDF (de otro sistema, dictado, etc.). Si no, el médico puede escribirlo
+          directamente acá cuando lo firme.
+        </p>
+        <FileDropzone
+          accept="application/pdf"
+          archivo={archivoInforme}
+          onChange={setArchivoInforme}
+          disabled={pendiente}
+        />
       </div>
 
       <div className="flex gap-3">
