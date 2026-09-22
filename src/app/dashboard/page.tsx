@@ -1,19 +1,48 @@
 import { Shell } from "@/components/app-shell/shell";
 import { CalendarDays, FileImage, Receipt, Users } from "lucide-react";
-import { requireSessionWithModules } from "@/lib/session";
+import { requireSessionWithModules, obtenerMiProfesionalId } from "@/lib/session";
 import { withTenantContext } from "@/lib/tenant-context";
+import { permisosDe } from "@/lib/permissions";
+import { listarFacturas } from "@/lib/actions/facturacion";
+
+const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
 export default async function DashboardPage() {
   const session = await requireSessionWithModules();
-  const [pacientesCount, estudiosPendientesCount] = await withTenantContext(session.tenantId, (tx) =>
-    Promise.all([tx.paciente.count(), tx.estudio.count({ where: { estado: "PENDIENTE" } })])
-  );
+  const permisos = permisosDe(session.rol);
+
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  const manana = new Date(hoy);
+  manana.setDate(manana.getDate() + 1);
+  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+
+  const miProfesionalId = !permisos.verTodosLosTurnos
+    ? await obtenerMiProfesionalId(session.userId, session.tenantId)
+    : null;
+
+  const [pacientesCount, turnosHoyCount, estudiosPendientesCount, facturas] = await Promise.all([
+    withTenantContext(session.tenantId, (tx) => tx.paciente.count()),
+    withTenantContext(session.tenantId, (tx) =>
+      tx.turno.count({
+        where: {
+          fechaHora: { gte: hoy, lt: manana },
+          estado: { not: "CANCELADO" },
+          ...(miProfesionalId ? { profesionalId: miProfesionalId } : {}),
+        },
+      })
+    ),
+    withTenantContext(session.tenantId, (tx) => tx.estudio.count({ where: { estado: "PENDIENTE" } })),
+    listarFacturas(inicioMes.toISOString().slice(0, 10)),
+  ]);
+
+  const facturadoMes = facturas.reduce((acc, f) => acc + Number(f.montoTotal), 0);
 
   const stats = [
     { label: "Pacientes activos", value: pacientesCount.toLocaleString("es-AR"), icon: Users },
-    { label: "Turnos hoy", value: "—", icon: CalendarDays },
+    { label: "Turnos hoy", value: turnosHoyCount.toLocaleString("es-AR"), icon: CalendarDays },
     { label: "Estudios pendientes", value: estudiosPendientesCount.toLocaleString("es-AR"), icon: FileImage },
-    { label: "Facturado este mes", value: "—", icon: Receipt },
+    { label: "Facturado este mes", value: currency.format(facturadoMes), icon: Receipt },
   ];
 
   return (

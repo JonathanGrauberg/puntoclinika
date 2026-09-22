@@ -15,6 +15,10 @@ export interface Permisos {
   gestionarEstudios: boolean;
   /** Escribir el informe y firmarlo (pasa a INFORMADO) — control de calidad, solo médico/admin. */
   informarEstudios: boolean;
+  /** Registrar un cobro (coseguro/plus) sobre un turno. Tarea de secretaría/admin, no del médico. */
+  gestionarFacturacion: boolean;
+  /** Ver los cobros de cualquier profesional. MEDICO ve solo los propios (para saber cuánto retirar). */
+  verTodaFacturacion: boolean;
 }
 
 const SIN_PERMISOS: Permisos = {
@@ -25,6 +29,8 @@ const SIN_PERMISOS: Permisos = {
   verAuditoria: false,
   gestionarEstudios: false,
   informarEstudios: false,
+  gestionarFacturacion: false,
+  verTodaFacturacion: false,
 };
 
 const MATRIZ: Record<Rol, Permisos> = {
@@ -36,6 +42,8 @@ const MATRIZ: Record<Rol, Permisos> = {
     verAuditoria: true,
     gestionarEstudios: true,
     informarEstudios: true,
+    gestionarFacturacion: true,
+    verTodaFacturacion: true,
   },
   SECRETARIA: {
     gestionarPacientes: true,
@@ -45,6 +53,8 @@ const MATRIZ: Record<Rol, Permisos> = {
     verAuditoria: false,
     gestionarEstudios: true,
     informarEstudios: false,
+    gestionarFacturacion: true,
+    verTodaFacturacion: true,
   },
   MEDICO: {
     gestionarPacientes: true,
@@ -54,6 +64,8 @@ const MATRIZ: Record<Rol, Permisos> = {
     verAuditoria: false,
     gestionarEstudios: true,
     informarEstudios: true,
+    gestionarFacturacion: false,
+    verTodaFacturacion: false,
   },
   AUDITOR: {
     gestionarPacientes: false,
@@ -63,6 +75,8 @@ const MATRIZ: Record<Rol, Permisos> = {
     verAuditoria: true,
     gestionarEstudios: false,
     informarEstudios: false,
+    gestionarFacturacion: false,
+    verTodaFacturacion: true,
   },
 };
 
