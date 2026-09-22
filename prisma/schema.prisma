@@ -1,0 +1,329 @@
+// .clinika — schema base (Fase 0)
+// Convenciones:
+// - Todo modelo tenant-scoped lleva tenantId + policy RLS equivalente (ver prisma/migrations/*_rls).
+// - El aislamiento real se refuerza en Postgres con RLS; este schema es la primera capa (app-level).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // Rol restringido (clinika_app, sin BYPASSRLS) — usado en runtime.
+  url       = env("DATABASE_URL")
+  // Rol owner (clinika_owner) — solo para `prisma migrate`, nunca en runtime.
+  // Si el owner tuviera BYPASSRLS y se usara en runtime, RLS quedaría decorativo.
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Núcleo multi-tenant
+// ---------------------------------------------------------------------------
+
+model Tenant {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  nombre    String
+  logoUrl   String?
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+  modulos     TenantModule[]
+  pacientes   Paciente[]
+  profesionales Profesional[]
+  practicas   Practica[]
+  turnos      Turno[]
+  estudios    Estudio[]
+  facturas    Factura[]
+  auditLogs   AuditLog[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  nombre       String
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  memberships   Membership[]
+  profesional   Profesional?
+}
+
+enum RolTenant {
+  ADMIN
+  SECRETARIA
+  MEDICO
+  AUDITOR
+}
+
+// Une un User a un Tenant con un rol. Permite que un profesional
+// atienda en más de un centro con el mismo login (selector post-login).
+model Membership {
+  id       String    @id @default(cuid())
+  userId   String
+  tenantId String
+  rol      RolTenant
+  activo   Boolean   @default(true)
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+}
+
+enum ModuloKey {
+  PACIENTES
+  TURNOS
+  ESTUDIOS
+  FACTURACION
+  OBRAS_SOCIALES
+  PORTAL_PACIENTE
+  ODONTOGRAMA
+  RECETAS_INFORMES
+  REPORTES
+  INTEGRACIONES_DICOM
+}
+
+model TenantModule {
+  id             String     @id @default(cuid())
+  tenantId       String
+  modulo         ModuloKey
+  habilitado     Boolean    @default(false)
+  activadoEn     DateTime?
+  precioOverride Decimal?   @db.Decimal(10, 2)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, modulo])
+  @@index([tenantId])
+}
+
+// ---------------------------------------------------------------------------
+// Auditoría (desde Fase 0 — historia clínica es dato sensible)
+// ---------------------------------------------------------------------------
+
+enum AuditAction {
+  VIEW
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  tenantId  String
+  userId    String?
+  accion    AuditAction
+  entidad   String // "Paciente" | "HistoriaClinicaEntry" | "Estudio" | ...
+  entidadId String
+  detalle   Json?
+  ip        String?
+  createdAt DateTime    @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, entidad, entidadId])
+  @@index([tenantId, userId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Núcleo clínico (Fase 1: Pacientes + Turnos + Estudios + Facturación básica)
+// ---------------------------------------------------------------------------
+
+model Paciente {
+  id               String    @id @default(cuid())
+  tenantId         String
+  dni              String
+  nombre           String
+  apellido         String
+  fechaNacimiento  DateTime?
+  telefono         String?
+  email            String?
+  alergias         String?
+  // Campo libre para tenants sin el módulo OBRAS_SOCIALES activado.
+  // Cuando el módulo esté activo, se usa el modelo Afiliacion (fase 3).
+  obraSocialTexto  String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  turnos   Turno[]
+  estudios Estudio[]
+  facturas Factura[]
+  historia HistoriaClinicaEntry[]
+
+  @@unique([tenantId, dni])
+  @@index([tenantId])
+}
+
+model Profesional {
+  id          String  @id @default(cuid())
+  tenantId    String
+  userId      String? @unique
+  nombre      String
+  apellido    String
+  matricula   String?
+  especialidad String?
+  activo      Boolean @default(true)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id])
+  turnos   Turno[]
+  estudiosInformados Estudio[] @relation("EstudioInformadoPor")
+  historia HistoriaClinicaEntry[]
+
+  @@index([tenantId])
+}
+
+// La unidad configurable multiespecialidad: cada centro carga su propio
+// catálogo de prácticas sobre la misma base de pacientes/turnos/facturación.
+model Practica {
+  id                    String  @id @default(cuid())
+  tenantId              String
+  nombre                String
+  especialidadKey       String? // libre por ahora; catálogo formal en fase 5 (Odontograma)
+  duracionMin           Int     @default(30)
+  precioParticular      Decimal @db.Decimal(10, 2)
+  requiereEstudio       Boolean @default(false)
+  requiereAutorizacionOS Boolean @default(false)
+  activo                Boolean @default(true)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  turnos   Turno[]
+  estudios Estudio[]
+  facturaItems FacturaItem[]
+
+  @@index([tenantId])
+}
+
+enum EstadoTurno {
+  RESERVADO
+  CONFIRMADO
+  EN_ESPERA
+  EN_ATENCION
+  ATENDIDO
+  CANCELADO
+  AUSENTE
+}
+
+model Turno {
+  id            String      @id @default(cuid())
+  tenantId      String
+  pacienteId    String
+  profesionalId String
+  practicaId    String
+  fechaHora     DateTime
+  duracionMin   Int
+  estado        EstadoTurno @default(RESERVADO)
+  origen        String? // "secretaria" | "kiosco" | "portal"
+  createdAt     DateTime    @default(now())
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  paciente    Paciente    @relation(fields: [pacienteId], references: [id])
+  profesional Profesional @relation(fields: [profesionalId], references: [id])
+  practica    Practica    @relation(fields: [practicaId], references: [id])
+  estudios    Estudio[]
+  facturas    Factura[]
+
+  @@index([tenantId, profesionalId, fechaHora])
+  @@index([tenantId, pacienteId])
+}
+
+enum EstadoEstudio {
+  PENDIENTE
+  INFORMADO
+}
+
+model Estudio {
+  id               String        @id @default(cuid())
+  tenantId         String
+  turnoId          String?
+  pacienteId       String
+  practicaId       String
+  archivoUrl       String?
+  modalidad        String?
+  estado           EstadoEstudio @default(PENDIENTE)
+  informadoPorId   String?
+  informadoEn      DateTime?
+  informeTexto     String?
+  createdAt        DateTime      @default(now())
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  turno       Turno?       @relation(fields: [turnoId], references: [id])
+  paciente    Paciente     @relation(fields: [pacienteId], references: [id])
+  practica    Practica     @relation(fields: [practicaId], references: [id])
+  informadoPor Profesional? @relation("EstudioInformadoPor", fields: [informadoPorId], references: [id])
+
+  @@index([tenantId, pacienteId])
+  @@index([tenantId, estado])
+}
+
+// Timeline clínico único del paciente. Recetas/Informes (fase 6) y
+// Odontograma (fase 5) cuelgan acá como "tipo" de entrada, no como tablas aparte.
+model HistoriaClinicaEntry {
+  id            String   @id @default(cuid())
+  tenantId      String
+  pacienteId    String
+  profesionalId String
+  tipo          String // "consulta" | "diagnostico" | "indicacion" | ...
+  contenido     String
+  fecha         DateTime @default(now())
+
+  paciente    Paciente    @relation(fields: [pacienteId], references: [id])
+  profesional Profesional @relation(fields: [profesionalId], references: [id])
+
+  @@index([tenantId, pacienteId, fecha])
+}
+
+// ---------------------------------------------------------------------------
+// Facturación básica (particular únicamente en Fase 1)
+// ---------------------------------------------------------------------------
+
+enum EstadoFactura {
+  PENDIENTE
+  PAGADA
+  ANULADA
+}
+
+model Factura {
+  id          String        @id @default(cuid())
+  tenantId    String
+  pacienteId  String
+  turnoId     String?
+  montoTotal  Decimal       @db.Decimal(10, 2)
+  estado      EstadoFactura @default(PENDIENTE)
+  createdAt   DateTime      @default(now())
+
+  tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  paciente Paciente      @relation(fields: [pacienteId], references: [id])
+  turno    Turno?        @relation(fields: [turnoId], references: [id])
+  items    FacturaItem[]
+  pagos    Pago[]
+
+  @@index([tenantId, pacienteId])
+}
+
+model FacturaItem {
+  id         String  @id @default(cuid())
+  facturaId  String
+  practicaId String
+  monto      Decimal @db.Decimal(10, 2)
+
+  factura  Factura  @relation(fields: [facturaId], references: [id], onDelete: Cascade)
+  practica Practica @relation(fields: [practicaId], references: [id])
+}
+
+model Pago {
+  id        String   @id @default(cuid())
+  facturaId String
+  metodo    String // "efectivo" | "tarjeta" | "transferencia"
+  monto     Decimal  @db.Decimal(10, 2)
+  fecha     DateTime @default(now())
+
+  factura Factura @relation(fields: [facturaId], references: [id], onDelete: Cascade)
+}
