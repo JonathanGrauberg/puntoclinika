@@ -1,0 +1,50 @@
+import Link from "next/link";
+import { Stethoscope, ClipboardList } from "lucide-react";
+import { Shell } from "@/components/app-shell/shell";
+import { requireSessionWithModules } from "@/lib/session";
+
+const items = [
+  {
+    href: "/configuracion/profesionales",
+    label: "Profesionales",
+    desc: "Médicos y profesionales que atienden en el centro.",
+    icon: Stethoscope,
+  },
+  {
+    href: "/configuracion/practicas",
+    label: "Prácticas",
+    desc: "Catálogo de prácticas: nombre, duración y precio particular.",
+    icon: ClipboardList,
+  },
+];
+
+export default async function ConfiguracionPage() {
+  const session = await requireSessionWithModules();
+
+  return (
+    <Shell
+      title="Configuración"
+      tenantName={session.tenantName}
+      userName={session.userName}
+      enabledModules={session.enabledModules}
+    >
+      <div className="grid gap-3 sm:grid-cols-2">
+        {items.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="flex flex-col gap-3 rounded-md border border-border bg-card p-5 transition-colors hover:bg-muted/50"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-muted text-foreground">
+              <item.icon className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="font-semibold text-foreground">{item.label}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{item.desc}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </Shell>
+  );
+}

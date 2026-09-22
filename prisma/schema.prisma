@@ -221,6 +221,7 @@ model Turno {
   duracionMin   Int
   estado        EstadoTurno @default(RESERVADO)
   origen        String? // "secretaria" | "kiosco" | "portal"
+  notas         String?
   createdAt     DateTime    @default(now())
 
   tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
