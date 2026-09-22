@@ -34,7 +34,7 @@ export function Sidebar({
   const visibleItems = NAV_ITEMS.filter((item) => !item.modulo || enabledModules.includes(item.modulo));
 
   return (
-    <aside className="flex h-full flex-col gap-4 rounded-lg border border-border bg-card p-3">
+    <aside className="flex h-full flex-col gap-4 border-r border-border bg-card p-3">
       <div className={cn("flex items-center pt-1", collapsed ? "justify-center" : "justify-between")}>
         {!collapsed && (
           <Image src={logoSrc} alt=".clinika" width={930} height={230} className="h-5 w-auto" priority />
