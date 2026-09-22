@@ -16,3 +16,12 @@ export async function hasModule(
   });
   return row?.habilitado ?? false;
 }
+
+/** Lista de módulos habilitados para el tenant activo, para gatear el nav. */
+export async function listEnabledModules(tx: TenantClient, tenantId: string): Promise<ModuloKey[]> {
+  const rows = await tx.tenantModule.findMany({
+    where: { tenantId, habilitado: true },
+    select: { modulo: true },
+  });
+  return rows.map((r) => r.modulo);
+}

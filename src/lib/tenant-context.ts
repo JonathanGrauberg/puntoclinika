@@ -27,3 +27,21 @@ export async function withTenantContext<T>(
 }
 
 export type TenantClient = Prisma.TransactionClient;
+
+/**
+ * Variante para el momento en que todavía no hay tenant activo (ej: login,
+ * resolver a qué centros pertenece un usuario). Setea `app.user_id` en vez
+ * de `app.tenant_id`. Solo sirve para tablas con una policy adicional que
+ * permita ver filas propias por userId (hoy: Membership) — el resto de las
+ * tablas tenant-scoped siguen invisibles porque su policy solo mira
+ * `app.tenant_id`, que acá queda sin setear.
+ */
+export async function withUserContext<T>(
+  userId: string,
+  callback: (tx: Prisma.TransactionClient) => Promise<T>
+): Promise<T> {
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.user_id', ${userId}, true)`;
+    return callback(tx);
+  });
+}

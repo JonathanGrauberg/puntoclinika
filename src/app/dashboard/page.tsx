@@ -1,20 +1,25 @@
 import { Shell } from "@/components/app-shell/shell";
 import { CalendarDays, FileImage, Receipt, Users } from "lucide-react";
+import { requireSessionWithModules } from "@/lib/session";
+import { withTenantContext } from "@/lib/tenant-context";
 
-const stats = [
-  { label: "Pacientes activos", value: "1.248", icon: Users },
-  { label: "Turnos hoy", value: "32", icon: CalendarDays },
-  { label: "Estudios pendientes", value: "7", icon: FileImage },
-  { label: "Facturado este mes", value: "$1.840.500", icon: Receipt },
-];
+export default async function DashboardPage() {
+  const session = await requireSessionWithModules();
+  const pacientesCount = await withTenantContext(session.tenantId, (tx) => tx.paciente.count());
 
-export default function DashboardPage() {
+  const stats = [
+    { label: "Pacientes activos", value: pacientesCount.toLocaleString("es-AR"), icon: Users },
+    { label: "Turnos hoy", value: "—", icon: CalendarDays },
+    { label: "Estudios pendientes", value: "—", icon: FileImage },
+    { label: "Facturado este mes", value: "—", icon: Receipt },
+  ];
+
   return (
     <Shell
       title="Inicio"
-      tenantName="Centro Demo"
-      userName="Admin Demo"
-      enabledModules={["PACIENTES", "TURNOS", "ESTUDIOS", "FACTURACION"]}
+      tenantName={session.tenantName}
+      userName={session.userName}
+      enabledModules={session.enabledModules}
     >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
