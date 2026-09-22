@@ -23,7 +23,10 @@ export default async function NuevoEstudioPage() {
       enabledModules={session.enabledModules}
     >
       <div className="max-w-xl rounded-md border border-border bg-card p-6">
-        <EstudioUploadForm pacientes={pacientes} practicas={practicas} />
+        <EstudioUploadForm
+          pacientes={pacientes}
+          practicas={practicas.map((p) => ({ id: p.id, nombre: p.nombre }))}
+        />
       </div>
     </Shell>
   );
