@@ -11,6 +11,10 @@ export interface Permisos {
   gestionarConfiguracion: boolean;
   /** Log de auditoría. */
   verAuditoria: boolean;
+  /** Cargar estudios (subir archivo + metadatos), estado queda PENDIENTE. */
+  gestionarEstudios: boolean;
+  /** Escribir el informe y firmarlo (pasa a INFORMADO) — control de calidad, solo médico/admin. */
+  informarEstudios: boolean;
 }
 
 const SIN_PERMISOS: Permisos = {
@@ -19,6 +23,8 @@ const SIN_PERMISOS: Permisos = {
   verTodosLosTurnos: false,
   gestionarConfiguracion: false,
   verAuditoria: false,
+  gestionarEstudios: false,
+  informarEstudios: false,
 };
 
 const MATRIZ: Record<Rol, Permisos> = {
@@ -28,6 +34,8 @@ const MATRIZ: Record<Rol, Permisos> = {
     verTodosLosTurnos: true,
     gestionarConfiguracion: true,
     verAuditoria: true,
+    gestionarEstudios: true,
+    informarEstudios: true,
   },
   SECRETARIA: {
     gestionarPacientes: true,
@@ -35,6 +43,8 @@ const MATRIZ: Record<Rol, Permisos> = {
     verTodosLosTurnos: true,
     gestionarConfiguracion: false,
     verAuditoria: false,
+    gestionarEstudios: true,
+    informarEstudios: false,
   },
   MEDICO: {
     gestionarPacientes: true,
@@ -42,6 +52,8 @@ const MATRIZ: Record<Rol, Permisos> = {
     verTodosLosTurnos: false,
     gestionarConfiguracion: false,
     verAuditoria: false,
+    gestionarEstudios: true,
+    informarEstudios: true,
   },
   AUDITOR: {
     gestionarPacientes: false,
@@ -49,6 +61,8 @@ const MATRIZ: Record<Rol, Permisos> = {
     verTodosLosTurnos: true,
     gestionarConfiguracion: false,
     verAuditoria: true,
+    gestionarEstudios: false,
+    informarEstudios: false,
   },
 };
 

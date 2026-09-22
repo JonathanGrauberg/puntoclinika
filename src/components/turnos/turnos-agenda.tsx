@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { TurnoModal, type PracticaOption, type TurnoExistente } from "./turno-modal";
-import type { PacienteOption } from "./paciente-picker";
+import type { PacienteOption } from "@/components/pacientes/paciente-picker";
 import { addDays, diaLabel, toISODate } from "@/lib/date-utils";
 
 const START_HOUR = 8;

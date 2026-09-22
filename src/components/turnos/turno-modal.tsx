@@ -5,7 +5,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { crearTurno, actualizarTurno, cancelarTurno } from "@/lib/actions/turnos";
 import type { TurnoFormState } from "@/lib/actions/turnos";
-import { PacientePicker, type PacienteOption } from "./paciente-picker";
+import { PacientePicker, type PacienteOption } from "@/components/pacientes/paciente-picker";
 import { toISODate } from "@/lib/date-utils";
 
 export interface PracticaOption {

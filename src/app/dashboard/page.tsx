@@ -5,12 +5,14 @@ import { withTenantContext } from "@/lib/tenant-context";
 
 export default async function DashboardPage() {
   const session = await requireSessionWithModules();
-  const pacientesCount = await withTenantContext(session.tenantId, (tx) => tx.paciente.count());
+  const [pacientesCount, estudiosPendientesCount] = await withTenantContext(session.tenantId, (tx) =>
+    Promise.all([tx.paciente.count(), tx.estudio.count({ where: { estado: "PENDIENTE" } })])
+  );
 
   const stats = [
     { label: "Pacientes activos", value: pacientesCount.toLocaleString("es-AR"), icon: Users },
     { label: "Turnos hoy", value: "—", icon: CalendarDays },
-    { label: "Estudios pendientes", value: "—", icon: FileImage },
+    { label: "Estudios pendientes", value: estudiosPendientesCount.toLocaleString("es-AR"), icon: FileImage },
     { label: "Facturado este mes", value: "—", icon: Receipt },
   ];
 
