@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/session";
 import { withTenantContext } from "@/lib/tenant-context";
 import { audit } from "@/lib/audit";
+import { permisosDe } from "@/lib/permissions";
 
 const profesionalSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio").max(100),
@@ -19,6 +20,9 @@ export interface ProfesionalFormState {
 
 export async function crearProfesional(formData: FormData): Promise<ProfesionalFormState | void> {
   const session = await requireSession();
+  if (!permisosDe(session.rol).gestionarConfiguracion) {
+    return { error: "No tenés permiso para hacer esto." };
+  }
   const raw = Object.fromEntries(formData.entries());
   const parsed = profesionalSchema.safeParse(raw);
   if (!parsed.success) {
@@ -46,6 +50,17 @@ export async function crearProfesional(formData: FormData): Promise<ProfesionalF
   });
 
   revalidatePath("/configuracion/profesionales");
+}
+
+/** Para el selector de "vincular usuario a profesional" al crear un MEDICO. */
+export async function listarProfesionalesSinUsuario() {
+  const session = await requireSession();
+  return withTenantContext(session.tenantId, (tx) =>
+    tx.profesional.findMany({
+      where: { activo: true, userId: null },
+      orderBy: { apellido: "asc" },
+    })
+  );
 }
 
 export async function listarProfesionales(soloActivos = false) {

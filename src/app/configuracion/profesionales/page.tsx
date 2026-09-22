@@ -1,10 +1,15 @@
+import { redirect } from "next/navigation";
 import { Shell } from "@/components/app-shell/shell";
 import { requireSessionWithModules } from "@/lib/session";
+import { permisosDe } from "@/lib/permissions";
 import { listarProfesionales } from "@/lib/actions/profesionales";
 import { ProfesionalQuickForm } from "@/components/configuracion/profesional-quick-form";
 
 export default async function ProfesionalesPage() {
   const session = await requireSessionWithModules();
+  if (!permisosDe(session.rol).gestionarConfiguracion) {
+    redirect("/dashboard");
+  }
   const profesionales = await listarProfesionales();
 
   return (
@@ -12,6 +17,7 @@ export default async function ProfesionalesPage() {
       title="Profesionales"
       tenantName={session.tenantName}
       userName={session.userName}
+      rol={session.rol}
       enabledModules={session.enabledModules}
     >
       <div className="mb-4 rounded-md border border-border bg-card p-5">

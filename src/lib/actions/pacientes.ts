@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/session";
 import { withTenantContext } from "@/lib/tenant-context";
 import { audit, auditView } from "@/lib/audit";
+import { permisosDe } from "@/lib/permissions";
 
 const pacienteSchema = z.object({
   dni: z
@@ -59,6 +60,9 @@ export async function checkDniDuplicado(dni: string) {
 
 export async function crearPaciente(formData: FormData): Promise<PacienteFormState | void> {
   const session = await requireSession();
+  if (!permisosDe(session.rol).gestionarPacientes) {
+    return { error: "No tenés permiso para hacer esto." };
+  }
   const parsed = parseForm(formData);
   if (!parsed.success) {
     return { fieldErrors: toFieldErrors(parsed.error) };
@@ -103,6 +107,9 @@ export async function crearPaciente(formData: FormData): Promise<PacienteFormSta
 
 export async function actualizarPaciente(id: string, formData: FormData): Promise<PacienteFormState | void> {
   const session = await requireSession();
+  if (!permisosDe(session.rol).gestionarPacientes) {
+    return { error: "No tenés permiso para hacer esto." };
+  }
   const parsed = parseForm(formData);
   if (!parsed.success) {
     return { fieldErrors: toFieldErrors(parsed.error) };

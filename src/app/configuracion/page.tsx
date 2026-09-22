@@ -1,7 +1,9 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Stethoscope, ClipboardList } from "lucide-react";
+import { Stethoscope, ClipboardList, UsersRound } from "lucide-react";
 import { Shell } from "@/components/app-shell/shell";
 import { requireSessionWithModules } from "@/lib/session";
+import { permisosDe } from "@/lib/permissions";
 
 const items = [
   {
@@ -16,16 +18,26 @@ const items = [
     desc: "Catálogo de prácticas: nombre, duración y precio particular.",
     icon: ClipboardList,
   },
+  {
+    href: "/configuracion/usuarios",
+    label: "Usuarios",
+    desc: "Quién puede entrar al sistema y con qué rol.",
+    icon: UsersRound,
+  },
 ];
 
 export default async function ConfiguracionPage() {
   const session = await requireSessionWithModules();
+  if (!permisosDe(session.rol).gestionarConfiguracion) {
+    redirect("/dashboard");
+  }
 
   return (
     <Shell
       title="Configuración"
       tenantName={session.tenantName}
       userName={session.userName}
+      rol={session.rol}
       enabledModules={session.enabledModules}
     >
       <div className="grid gap-3 sm:grid-cols-2">

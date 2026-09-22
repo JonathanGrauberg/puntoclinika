@@ -32,12 +32,14 @@ export function TurnosAgenda({
   turnos,
   pacientes,
   practicas,
+  puedeGestionar,
 }: {
   weekStart: Date;
   profesionalId: string;
   turnos: TurnoConDatos[];
   pacientes: PacienteOption[];
   practicas: PracticaOption[];
+  puedeGestionar: boolean;
 }) {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
@@ -110,13 +112,15 @@ export function TurnosAgenda({
           </span>
         </div>
 
-        <button
-          onClick={() => openCreate(dias[0], "08:00")}
-          className="flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" />
-          Nuevo turno
-        </button>
+        {puedeGestionar && (
+          <button
+            onClick={() => openCreate(dias[0], "08:00")}
+            className="flex h-10 items-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo turno
+          </button>
+        )}
       </div>
 
       <div className="overflow-x-auto rounded-md border border-border">
@@ -143,34 +147,52 @@ export function TurnosAgenda({
 
           {dias.map((dia) => (
             <div key={dia.toISOString()} className="relative border-r border-border last:border-r-0">
-              {slots.map((hora) => (
-                <button
-                  key={hora}
-                  type="button"
-                  style={{ height: SLOT_HEIGHT }}
-                  onClick={() => openCreate(dia, hora)}
-                  className="block w-full border-b border-border hover:bg-muted/60"
-                />
-              ))}
+              {slots.map((hora) =>
+                puedeGestionar ? (
+                  <button
+                    key={hora}
+                    type="button"
+                    style={{ height: SLOT_HEIGHT }}
+                    onClick={() => openCreate(dia, hora)}
+                    className="block w-full border-b border-border hover:bg-muted/60"
+                  />
+                ) : (
+                  <div key={hora} style={{ height: SLOT_HEIGHT }} className="border-b border-border" />
+                )
+              )}
 
               {turnosDelDia(dia).map((t) => {
                 const fecha = new Date(t.fechaHora);
-                return (
-                  <button
-                    key={t.id}
-                    type="button"
-                    onClick={() => openEdit(t)}
-                    style={{
-                      top: offsetPx(fecha),
-                      height: Math.max((t.duracionMin / SLOT_MIN) * SLOT_HEIGHT - 2, SLOT_HEIGHT - 2),
-                    }}
-                    className="absolute left-0.5 right-0.5 overflow-hidden rounded-md bg-foreground px-2 py-1 text-left text-background"
-                  >
+                const style = {
+                  top: offsetPx(fecha),
+                  height: Math.max((t.duracionMin / SLOT_MIN) * SLOT_HEIGHT - 2, SLOT_HEIGHT - 2),
+                };
+                const contenido = (
+                  <>
                     <p className="truncate text-xs font-semibold">
                       {t.paciente.apellido}, {t.paciente.nombre}
                     </p>
                     <p className="truncate text-[11px] opacity-80">{t.practica.nombre}</p>
+                  </>
+                );
+                return puedeGestionar ? (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => openEdit(t)}
+                    style={style}
+                    className="absolute left-0.5 right-0.5 overflow-hidden rounded-md bg-foreground px-2 py-1 text-left text-background"
+                  >
+                    {contenido}
                   </button>
+                ) : (
+                  <div
+                    key={t.id}
+                    style={style}
+                    className="absolute left-0.5 right-0.5 overflow-hidden rounded-md bg-foreground px-2 py-1 text-background"
+                  >
+                    {contenido}
+                  </div>
                 );
               })}
             </div>

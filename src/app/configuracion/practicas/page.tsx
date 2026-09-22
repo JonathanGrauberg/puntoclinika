@@ -1,5 +1,7 @@
+import { redirect } from "next/navigation";
 import { Shell } from "@/components/app-shell/shell";
 import { requireSessionWithModules } from "@/lib/session";
+import { permisosDe } from "@/lib/permissions";
 import { listarPracticas } from "@/lib/actions/practicas";
 import { PracticaQuickForm } from "@/components/configuracion/practica-quick-form";
 
@@ -7,6 +9,9 @@ const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "
 
 export default async function PracticasPage() {
   const session = await requireSessionWithModules();
+  if (!permisosDe(session.rol).gestionarConfiguracion) {
+    redirect("/dashboard");
+  }
   const practicas = await listarPracticas();
 
   return (
@@ -14,6 +19,7 @@ export default async function PracticasPage() {
       title="Prácticas"
       tenantName={session.tenantName}
       userName={session.userName}
+      rol={session.rol}
       enabledModules={session.enabledModules}
     >
       <div className="mb-4 rounded-md border border-border bg-card p-5">

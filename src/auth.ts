@@ -10,6 +10,10 @@ import { withUserContext } from "@/lib/tenant-context";
 // no acá — ver nota en prisma/migrations/20260922000001_rls.
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
+  // Usa el host real de la request en vez de depender de AUTH_URL — evita
+  // redirects rotos cuando el puerto de dev cambia (autoPort) o en deploys
+  // donde el host varía (Vercel).
+  trustHost: true,
   providers: [
     Credentials({
       credentials: {

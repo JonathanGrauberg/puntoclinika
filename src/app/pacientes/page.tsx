@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search, UserPlus } from "lucide-react";
 import { Shell } from "@/components/app-shell/shell";
 import { requireSessionWithModules } from "@/lib/session";
+import { permisosDe } from "@/lib/permissions";
 import { listarPacientes } from "@/lib/actions/pacientes";
 
 export default async function PacientesPage({
@@ -10,6 +11,7 @@ export default async function PacientesPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const session = await requireSessionWithModules();
+  const permisos = permisosDe(session.rol);
   const { q } = await searchParams;
   const pacientes = await listarPacientes(q);
 
@@ -18,6 +20,7 @@ export default async function PacientesPage({
       title="Pacientes"
       tenantName={session.tenantName}
       userName={session.userName}
+      rol={session.rol}
       enabledModules={session.enabledModules}
     >
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -31,13 +34,15 @@ export default async function PacientesPage({
             className="h-11 w-full rounded-md border border-border bg-background pl-9 pr-3 text-[15px] text-foreground outline-none focus:border-foreground"
           />
         </form>
-        <Link
-          href="/pacientes/nuevo"
-          className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-5 text-[15px] font-semibold text-primary-foreground hover:opacity-90"
-        >
-          <UserPlus className="h-4 w-4" />
-          Nuevo paciente
-        </Link>
+        {permisos.gestionarPacientes && (
+          <Link
+            href="/pacientes/nuevo"
+            className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-md bg-primary px-5 text-[15px] font-semibold text-primary-foreground hover:opacity-90"
+          >
+            <UserPlus className="h-4 w-4" />
+            Nuevo paciente
+          </Link>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-md border border-border">

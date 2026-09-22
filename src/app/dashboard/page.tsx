@@ -19,6 +19,7 @@ export default async function DashboardPage() {
       title="Inicio"
       tenantName={session.tenantName}
       userName={session.userName}
+      rol={session.rol}
       enabledModules={session.enabledModules}
     >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

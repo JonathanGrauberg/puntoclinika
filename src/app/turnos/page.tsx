@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Shell } from "@/components/app-shell/shell";
-import { requireSessionWithModules } from "@/lib/session";
+import { requireSessionWithModules, obtenerMiProfesionalId } from "@/lib/session";
+import { permisosDe } from "@/lib/permissions";
 import { listarProfesionales } from "@/lib/actions/profesionales";
 import { listarPracticas } from "@/lib/actions/practicas";
 import { listarPacientes } from "@/lib/actions/pacientes";
@@ -15,18 +16,20 @@ export default async function TurnosPage({
   searchParams: Promise<{ profesionalId?: string; week?: string }>;
 }) {
   const session = await requireSessionWithModules();
+  const permisos = permisosDe(session.rol);
   const { profesionalId: profesionalIdParam, week: weekParam } = await searchParams;
+
+  const shellProps = {
+    tenantName: session.tenantName,
+    userName: session.userName,
+    rol: session.rol,
+    enabledModules: session.enabledModules,
+  };
 
   const [profesionales, practicas] = await Promise.all([
     listarProfesionales(true),
     listarPracticas(true),
   ]);
-
-  const shellProps = {
-    tenantName: session.tenantName,
-    userName: session.userName,
-    enabledModules: session.enabledModules,
-  };
 
   if (profesionales.length === 0) {
     return (
@@ -51,7 +54,26 @@ export default async function TurnosPage({
     );
   }
 
-  const profesionalId = profesionalIdParam ?? profesionales[0].id;
+  let profesionalId: string;
+  if (permisos.verTodosLosTurnos) {
+    profesionalId = profesionalIdParam ?? profesionales[0].id;
+  } else {
+    // MEDICO: agenda fija a su propio profesional, no elige.
+    const miId = await obtenerMiProfesionalId(session.userId, session.tenantId);
+    if (!miId) {
+      return (
+        <Shell title="Turnos" {...shellProps}>
+          <EmptyState
+            mensaje="Tu usuario todavía no está vinculado a un profesional. Pedile a un administrador que te vincule desde Configuración → Usuarios."
+            href="/dashboard"
+            cta="Volver al inicio"
+          />
+        </Shell>
+      );
+    }
+    profesionalId = miId;
+  }
+
   const weekStart = weekParam ? new Date(`${weekParam}T00:00:00`) : getMonday(new Date());
   const weekStartISO = toISODate(weekStart);
 
@@ -62,9 +84,11 @@ export default async function TurnosPage({
 
   return (
     <Shell title="Turnos" {...shellProps}>
-      <div className="mb-4">
-        <ProfesionalSelector profesionales={profesionales} value={profesionalId} week={weekStartISO} />
-      </div>
+      {permisos.verTodosLosTurnos && (
+        <div className="mb-4">
+          <ProfesionalSelector profesionales={profesionales} value={profesionalId} week={weekStartISO} />
+        </div>
+      )}
       <TurnosAgenda
         weekStart={weekStart}
         profesionalId={profesionalId}
@@ -80,6 +104,7 @@ export default async function TurnosPage({
         }))}
         pacientes={pacientes}
         practicas={practicas.map((p) => ({ id: p.id, nombre: p.nombre, duracionMin: p.duracionMin }))}
+        puedeGestionar={permisos.gestionarTurnos}
       />
     </Shell>
   );

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/session";
 import { withTenantContext } from "@/lib/tenant-context";
 import { audit } from "@/lib/audit";
+import { permisosDe } from "@/lib/permissions";
 
 const practicaSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio").max(150),
@@ -20,6 +21,9 @@ export interface PracticaFormState {
 
 export async function crearPractica(formData: FormData): Promise<PracticaFormState | void> {
   const session = await requireSession();
+  if (!permisosDe(session.rol).gestionarConfiguracion) {
+    return { error: "No tenés permiso para hacer esto." };
+  }
   const raw = Object.fromEntries(formData.entries());
   const parsed = practicaSchema.safeParse({
     ...raw,

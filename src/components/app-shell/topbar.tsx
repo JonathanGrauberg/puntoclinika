@@ -1,8 +1,10 @@
 "use client";
 
 import { Menu } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { cerrarSesion } from "@/lib/actions/auth";
 
 export function Topbar({
   title,
@@ -34,19 +36,41 @@ export function Topbar({
 
       <div className="flex items-center gap-2">
         <ThemeToggle />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-              {userName
-                .split(" ")
-                .slice(0, 2)
-                .map((s) => s[0])
-                .join("")
-                .toUpperCase()}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{userName}</TooltipContent>
-        </Tooltip>
+        <DropdownMenu.Root>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenu.Trigger asChild>
+                <button
+                  type="button"
+                  aria-label={`Menú de ${userName}`}
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground"
+                >
+                  {userName
+                    .split(" ")
+                    .slice(0, 2)
+                    .map((s) => s[0])
+                    .join("")
+                    .toUpperCase()}
+                </button>
+              </DropdownMenu.Trigger>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{userName}</TooltipContent>
+          </Tooltip>
+          <DropdownMenu.Portal>
+            <DropdownMenu.Content
+              align="end"
+              sideOffset={8}
+              className="z-50 min-w-40 rounded-md border border-border bg-card p-1 shadow-[0_2px_12px_rgb(0_0_0_/_0.12)]"
+            >
+              <DropdownMenu.Item
+                onSelect={() => cerrarSesion()}
+                className="cursor-pointer rounded-md px-3 py-2 text-sm text-foreground outline-none hover:bg-muted"
+              >
+                Cerrar sesión
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu.Portal>
+        </DropdownMenu.Root>
       </div>
     </header>
   );

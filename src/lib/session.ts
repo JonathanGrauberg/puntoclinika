@@ -29,8 +29,18 @@ export async function requireSession(): Promise<ActiveSession> {
     userName: session.user.name ?? session.user.email ?? "Usuario",
     tenantId: session.user.tenantId,
     tenantName: session.user.tenantName ?? "Centro",
-    rol: session.user.rol ?? "SECRETARIA",
+    // Fail-closed: si por algún motivo el token no trae rol, no se le da
+    // de arranque el rol más amplio (SECRETARIA) — permisosDe("") = sin permisos.
+    rol: session.user.rol ?? "",
   };
+}
+
+/** Profesional vinculado al usuario actual (relevante para el rol MEDICO). */
+export async function obtenerMiProfesionalId(userId: string, tenantId: string) {
+  const profesional = await withTenantContext(tenantId, (tx) =>
+    tx.profesional.findUnique({ where: { userId } })
+  );
+  return profesional?.id ?? null;
 }
 
 /**

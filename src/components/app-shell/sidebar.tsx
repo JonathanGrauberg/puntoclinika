@@ -5,14 +5,16 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import type { ModuloKey } from "@prisma/client";
 import { Building2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { NAV_ITEMS, NAV_ITEM_CONFIG } from "./nav-items";
+import { NAV_ITEMS, NAV_ITEMS_SECONDARY } from "./nav-items";
 import { NavLink } from "./nav-link";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { permisosDe } from "@/lib/permissions";
 
 interface SidebarProps {
   tenantName: string;
   enabledModules: ModuloKey[];
+  rol: string;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
   onNavigate?: () => void;
@@ -21,6 +23,7 @@ interface SidebarProps {
 export function Sidebar({
   tenantName,
   enabledModules,
+  rol,
   collapsed = false,
   onToggleCollapsed,
   onNavigate,
@@ -31,7 +34,11 @@ export function Sidebar({
 
   const logoSrc = mounted && resolvedTheme === "dark" ? "/brand/logo-blanco.png" : "/brand/logo-negro.png";
 
+  const permisos = permisosDe(rol);
   const visibleItems = NAV_ITEMS.filter((item) => !item.modulo || enabledModules.includes(item.modulo));
+  const visibleSecondary = NAV_ITEMS_SECONDARY.filter(
+    (item) => !item.requierePermiso || permisos[item.requierePermiso]
+  );
 
   return (
     <aside className="flex h-full flex-col gap-4 border-r border-border bg-card p-3">
@@ -63,7 +70,9 @@ export function Sidebar({
       </nav>
 
       <div className={cn("flex flex-col gap-0.5 border-t border-border pt-3", collapsed && "items-center")}>
-        <NavLink item={NAV_ITEM_CONFIG} collapsed={collapsed} onNavigate={onNavigate} />
+        {visibleSecondary.map((item) => (
+          <NavLink key={item.href} item={item} collapsed={collapsed} onNavigate={onNavigate} />
+        ))}
 
         {collapsed ? (
           <Tooltip>

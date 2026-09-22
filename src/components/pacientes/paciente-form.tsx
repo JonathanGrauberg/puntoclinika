@@ -10,6 +10,7 @@ import type { PacienteFormState } from "@/lib/actions/pacientes";
 interface PacienteFormProps {
   mode: "create" | "edit";
   paciente?: Paciente;
+  readOnly?: boolean;
 }
 
 const inputClass =
@@ -21,7 +22,7 @@ function toDateInputValue(date: Date | null | undefined) {
   return new Date(date).toISOString().slice(0, 10);
 }
 
-export function PacienteForm({ mode, paciente }: PacienteFormProps) {
+export function PacienteForm({ mode, paciente, readOnly }: PacienteFormProps) {
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<PacienteFormState>({});
   const [dniWarning, setDniWarning] = useState<{ id: string; nombre: string; apellido: string } | null>(
@@ -75,6 +76,7 @@ export function PacienteForm({ mode, paciente }: PacienteFormProps) {
         </div>
       )}
 
+      <fieldset disabled={readOnly} className="contents">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="dni" className={labelClass}>
@@ -173,21 +175,33 @@ export function PacienteForm({ mode, paciente }: PacienteFormProps) {
           />
         </div>
       </div>
+      </fieldset>
 
       <div className="flex gap-3">
-        <button
-          type="submit"
-          disabled={pending}
-          className="h-11 rounded-md bg-primary px-6 text-[15px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {pending ? "Guardando..." : mode === "create" ? "Crear paciente" : "Guardar cambios"}
-        </button>
-        <Link
-          href={mode === "edit" && paciente ? `/pacientes/${paciente.id}` : "/pacientes"}
-          className="flex h-11 items-center rounded-md border border-border px-6 text-[15px] font-semibold text-foreground hover:bg-muted"
-        >
-          Cancelar
-        </Link>
+        {readOnly ? (
+          <Link
+            href="/pacientes"
+            className="flex h-11 items-center rounded-md border border-border px-6 text-[15px] font-semibold text-foreground hover:bg-muted"
+          >
+            Volver al listado
+          </Link>
+        ) : (
+          <>
+            <button
+              type="submit"
+              disabled={pending}
+              className="h-11 rounded-md bg-primary px-6 text-[15px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {pending ? "Guardando..." : mode === "create" ? "Crear paciente" : "Guardar cambios"}
+            </button>
+            <Link
+              href={mode === "edit" && paciente ? `/pacientes/${paciente.id}` : "/pacientes"}
+              className="flex h-11 items-center rounded-md border border-border px-6 text-[15px] font-semibold text-foreground hover:bg-muted"
+            >
+              Cancelar
+            </Link>
+          </>
+        )}
       </div>
     </form>
   );

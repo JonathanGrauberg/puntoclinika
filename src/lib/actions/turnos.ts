@@ -2,9 +2,10 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/session";
+import { requireSession, obtenerMiProfesionalId, type ActiveSession } from "@/lib/session";
 import { withTenantContext, type TenantClient } from "@/lib/tenant-context";
 import { audit } from "@/lib/audit";
+import { permisosDe, PermisoDenegadoError } from "@/lib/permissions";
 
 const turnoSchema = z.object({
   pacienteId: z.string().min(1, "Elegí un paciente"),
@@ -17,6 +18,20 @@ const turnoSchema = z.object({
 
 export interface TurnoFormState {
   error?: string;
+}
+
+/**
+ * ADMIN/SECRETARIA gestionan la agenda de cualquier profesional. MEDICO solo
+ * la propia (spec: "cada profesional ve solo sus pacientes/turnos, salvo
+ * permisos ampliados"). AUDITOR no gestiona ninguna.
+ */
+async function assertPuedeGestionarTurno(session: ActiveSession, profesionalId: string) {
+  const permisos = permisosDe(session.rol);
+  if (!permisos.gestionarTurnos) throw new PermisoDenegadoError();
+  if (!permisos.verTodosLosTurnos) {
+    const miId = await obtenerMiProfesionalId(session.userId, session.tenantId);
+    if (miId !== profesionalId) throw new PermisoDenegadoError("Solo podés gestionar tu propia agenda.");
+  }
 }
 
 async function hayOtroTurno(
@@ -58,6 +73,13 @@ export async function crearTurno(formData: FormData): Promise<TurnoFormState | v
   const fechaHora = new Date(`${data.fecha}T${data.hora}:00`);
   if (isNaN(fechaHora.getTime())) {
     return { error: "Fecha u hora inválida" };
+  }
+
+  try {
+    await assertPuedeGestionarTurno(session, data.profesionalId);
+  } catch (error) {
+    if (error instanceof PermisoDenegadoError) return { error: error.message };
+    throw error;
   }
 
   try {
@@ -118,6 +140,13 @@ export async function actualizarTurno(id: string, formData: FormData): Promise<T
   }
 
   try {
+    await assertPuedeGestionarTurno(session, data.profesionalId);
+  } catch (error) {
+    if (error instanceof PermisoDenegadoError) return { error: error.message };
+    throw error;
+  }
+
+  try {
     await withTenantContext(session.tenantId, async (tx) => {
       const practica = await tx.practica.findUniqueOrThrow({ where: { id: data.practicaId } });
 
@@ -163,6 +192,12 @@ export async function actualizarTurno(id: string, formData: FormData): Promise<T
 
 export async function cancelarTurno(id: string): Promise<void> {
   const session = await requireSession();
+
+  const turno = await withTenantContext(session.tenantId, (tx) =>
+    tx.turno.findUniqueOrThrow({ where: { id } })
+  );
+  await assertPuedeGestionarTurno(session, turno.profesionalId);
+
   await withTenantContext(session.tenantId, async (tx) => {
     await tx.turno.update({ where: { id }, data: { estado: "CANCELADO" } });
     await audit(tx, {
@@ -179,6 +214,15 @@ export async function cancelarTurno(id: string): Promise<void> {
 
 export async function listarTurnosSemana(profesionalId: string, weekStartISO: string) {
   const session = await requireSession();
+
+  const permisos = permisosDe(session.rol);
+  if (!permisos.verTodosLosTurnos) {
+    const miId = await obtenerMiProfesionalId(session.userId, session.tenantId);
+    if (miId !== profesionalId) {
+      throw new PermisoDenegadoError("Solo podés ver tu propia agenda.");
+    }
+  }
+
   const weekStart = new Date(`${weekStartISO}T00:00:00`);
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 7);
