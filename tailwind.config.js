@@ -34,19 +34,19 @@ module.exports = {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
         },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
         border: "hsl(var(--border))",
         ring: "hsl(var(--ring))",
       },
       borderRadius: {
-        sm: "calc(var(--radius) - 1.25rem)",
-        md: "calc(var(--radius) - 0.75rem)",
-        lg: "calc(var(--radius) - 0.25rem)",
-        xl: "var(--radius)",
-        "2xl": "calc(var(--radius) + 0.5rem)",
-      },
-      boxShadow: {
-        bento: "0 1px 2px 0 rgb(0 0 0 / 0.04), 0 8px 24px -8px rgb(0 0 0 / 0.08)",
-        "bento-dark": "0 1px 2px 0 rgb(0 0 0 / 0.2), 0 8px 24px -8px rgb(0 0 0 / 0.5)",
+        sm: "calc(var(--radius) - 0.25rem)",
+        md: "var(--radius)",
+        lg: "calc(var(--radius) + 0.25rem)",
+        xl: "calc(var(--radius) + 0.5rem)",
+        "2xl": "calc(var(--radius) + 0.75rem)",
       },
       keyframes: {
         "pulse-dot": {

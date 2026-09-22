@@ -66,7 +66,7 @@ export function Shell({ title, tenantName, userName, enabledModules, children }:
                   <button
                     type="button"
                     aria-label="Cerrar menú"
-                    className="absolute -right-3 -top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card shadow-bento"
+                    className="absolute -right-3 -top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card"
                   >
                     <X className="h-4 w-4" />
                   </button>
