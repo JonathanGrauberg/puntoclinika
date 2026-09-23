@@ -36,6 +36,7 @@ model Tenant {
   practicas   Practica[]
   turnos      Turno[]
   estudios    Estudio[]
+  estudioArchivos EstudioArchivo[]
   facturas    Factura[]
   auditLogs   AuditLog[]
 }
@@ -246,7 +247,6 @@ model Estudio {
   turnoId          String?
   pacienteId       String
   practicaId       String
-  archivoUrl       String?
   // Adjunto opcional: un PDF de informe externo (ej: ya viene firmado de
   // otro sistema o dictado). Independiente de informeTexto, que es lo que
   // el médico escribe y firma acá mismo — pueden coexistir los dos.
@@ -263,9 +263,28 @@ model Estudio {
   paciente    Paciente     @relation(fields: [pacienteId], references: [id])
   practica    Practica     @relation(fields: [practicaId], references: [id])
   informadoPor Profesional? @relation("EstudioInformadoPor", fields: [informadoPorId], references: [id])
+  // Una radiografía/ecografía suele traer varias imágenes, no una sola —
+  // por eso es una relación 1-a-muchos y no un campo archivoUrl suelto
+  // (que es lo que había antes). Permite subir varias juntas o ir
+  // agregando después sin tocar el estudio en sí.
+  archivos    EstudioArchivo[]
 
   @@index([tenantId, pacienteId])
   @@index([tenantId, estado])
+}
+
+model EstudioArchivo {
+  id        String   @id @default(cuid())
+  tenantId  String
+  estudioId String
+  key       String
+  orden     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  estudio Estudio @relation(fields: [estudioId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, estudioId])
 }
 
 // Timeline clínico único del paciente. Recetas/Informes (fase 6) y

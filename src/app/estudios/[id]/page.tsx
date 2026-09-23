@@ -3,7 +3,8 @@ import { Shell } from "@/components/app-shell/shell";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { obtenerEstudio } from "@/lib/actions/estudios";
-import { EstudioViewer } from "@/components/estudios/estudio-viewer";
+import { EstudioGallery, InformeAdjuntoViewer } from "@/components/estudios/estudio-viewer";
+import { AgregarArchivosForm } from "@/components/estudios/agregar-archivos-form";
 import { InformeForm } from "@/components/estudios/informe-form";
 
 export default async function EstudioDetallePage({ params }: { params: Promise<{ id: string }> }) {
@@ -23,8 +24,20 @@ export default async function EstudioDetallePage({ params }: { params: Promise<{
       enabledModules={session.enabledModules}
     >
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="rounded-md border border-border bg-card p-5">
-          <EstudioViewer estudioId={estudio.id} archivoKey={estudio.archivoUrl ?? ""} />
+        <div className="flex flex-col gap-4">
+          <div className="rounded-md border border-border bg-card p-5">
+            <h2 className="mb-3 text-sm font-semibold text-foreground">
+              Imágenes {estudio.archivos.length > 0 && `(${estudio.archivos.length})`}
+            </h2>
+            <EstudioGallery archivos={estudio.archivos} />
+          </div>
+
+          {permisos.gestionarEstudios && (
+            <div className="rounded-md border border-border bg-card p-5">
+              <h2 className="mb-3 text-sm font-semibold text-foreground">Agregar más imágenes</h2>
+              <AgregarArchivosForm estudioId={estudio.id} />
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-4">
@@ -61,12 +74,7 @@ export default async function EstudioDetallePage({ params }: { params: Promise<{
           {estudio.informeArchivoUrl && (
             <div className="rounded-md border border-border bg-card p-5">
               <h2 className="mb-3 text-sm font-semibold text-foreground">Informe adjunto</h2>
-              <EstudioViewer
-                estudioId={estudio.id}
-                archivoKey={estudio.informeArchivoUrl}
-                tipo="informe"
-                alto="40vh"
-              />
+              <InformeAdjuntoViewer estudioId={estudio.id} archivoKey={estudio.informeArchivoUrl} />
             </div>
           )}
 

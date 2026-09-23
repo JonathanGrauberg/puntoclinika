@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { PacientePicker, type PacienteOption } from "@/components/pacientes/paciente-picker";
 import { FileDropzone } from "./file-dropzone";
+import { MultiFileDropzone } from "./multi-file-dropzone";
 import { crearUrlSubida, crearEstudio } from "@/lib/actions/estudios";
 import type { EstudioFormState } from "@/lib/actions/estudios";
 
@@ -36,14 +37,14 @@ export function EstudioUploadForm({
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<EstudioFormState>({});
   const [pacienteId, setPacienteId] = useState("");
-  const [archivo, setArchivo] = useState<File | null>(null);
+  const [archivos, setArchivos] = useState<File[]>([]);
   const [archivoInforme, setArchivoInforme] = useState<File | null>(null);
   const [subiendo, setSubiendo] = useState<"idle" | "subiendo" | "creando">("idle");
   const formRef = useRef<HTMLFormElement>(null);
 
   function handleSubmit(formData: FormData) {
-    if (!archivo) {
-      setState({ error: "Elegí el archivo del estudio." });
+    if (archivos.length === 0) {
+      setState({ error: "Subí al menos un archivo del estudio (una radiografía o ecografía suele traer varios)." });
       return;
     }
     setState({});
@@ -51,11 +52,11 @@ export function EstudioUploadForm({
     startTransition(async () => {
       try {
         setSubiendo("subiendo");
-        const key = await subirArchivo(archivo);
+        const keys = await Promise.all(archivos.map(subirArchivo));
         const informeKey = archivoInforme ? await subirArchivo(archivoInforme) : "";
 
         setSubiendo("creando");
-        formData.set("key", key);
+        for (const key of keys) formData.append("archivoKeys", key);
         formData.set("informeKey", informeKey);
         const result = await crearEstudio(formData);
         if (result?.error) setState(result);
@@ -106,8 +107,16 @@ export function EstudioUploadForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className={labelClass}>Estudio (imagen o PDF) *</label>
-        <FileDropzone accept="image/*,application/pdf" archivo={archivo} onChange={setArchivo} disabled={pendiente} />
+        <label className={labelClass}>Estudio (imágenes o PDF) *</label>
+        <p className="text-xs text-muted-foreground">
+          Podés elegir varios archivos a la vez — una radiografía o ecografía suele traer más de una imagen.
+        </p>
+        <MultiFileDropzone
+          accept="image/*,application/pdf"
+          archivos={archivos}
+          onChange={setArchivos}
+          disabled={pendiente}
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -127,10 +136,14 @@ export function EstudioUploadForm({
       <div className="flex gap-3">
         <button
           type="submit"
-          disabled={!pacienteId || !archivo || pendiente}
+          disabled={!pacienteId || archivos.length === 0 || pendiente}
           className="h-11 rounded-md bg-primary px-6 text-[15px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          {subiendo === "subiendo" ? "Subiendo archivo..." : subiendo === "creando" ? "Guardando..." : "Cargar estudio"}
+          {subiendo === "subiendo"
+            ? "Subiendo archivos..."
+            : subiendo === "creando"
+              ? "Guardando..."
+              : "Cargar estudio"}
         </button>
       </div>
     </form>
