@@ -23,13 +23,37 @@ export async function listarAuditoria() {
       : [];
     const nombrePorId = new Map(usuarios.map((u) => [u.id, u.nombre]));
 
-    return entradas.map((e) => ({
-      id: e.id,
-      accion: e.accion,
-      entidad: e.entidad,
-      entidadId: e.entidadId,
-      usuario: e.userId ? (nombrePorId.get(e.userId) ?? "Usuario eliminado") : "Sistema",
-      createdAt: e.createdAt,
-    }));
+    // Accesos hechos desde el Portal del Paciente no tienen userId (el
+    // paciente no es un User) pero sí guardan pacienteId en detalle.
+    const pacienteIds = [
+      ...new Set(
+        entradas
+          .filter((e) => !e.userId)
+          .map((e) => (e.detalle as { pacienteId?: string } | null)?.pacienteId)
+          .filter((id): id is string => !!id)
+      ),
+    ];
+    const pacientes = pacienteIds.length
+      ? await tx.paciente.findMany({ where: { id: { in: pacienteIds } }, select: { id: true, nombre: true, apellido: true } })
+      : [];
+    const pacientePorId = new Map(pacientes.map((p) => [p.id, `${p.apellido}, ${p.nombre} (paciente)`]));
+
+    return entradas.map((e) => {
+      const detalle = e.detalle as { pacienteId?: string } | null;
+      let usuario = "Sistema";
+      if (e.userId) {
+        usuario = nombrePorId.get(e.userId) ?? "Usuario eliminado";
+      } else if (detalle?.pacienteId) {
+        usuario = pacientePorId.get(detalle.pacienteId) ?? "Paciente";
+      }
+      return {
+        id: e.id,
+        accion: e.accion,
+        entidad: e.entidad,
+        entidadId: e.entidadId,
+        usuario,
+        createdAt: e.createdAt,
+      };
+    });
   });
 }

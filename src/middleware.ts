@@ -15,5 +15,7 @@ export default auth((req) => {
 
 export const config = {
   runtime: "nodejs",
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|brand).*)"],
+  // /portal tiene su propia sesión y su propio guard (requireSesionPortal),
+  // completamente separados de la sesión de staff — no debe pasar por acá.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|brand|portal).*)"],
 };

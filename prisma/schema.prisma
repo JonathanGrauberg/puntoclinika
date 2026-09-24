@@ -39,6 +39,7 @@ model Tenant {
   estudioArchivos EstudioArchivo[]
   facturas    Factura[]
   auditLogs   AuditLog[]
+  pacientePortales PacientePortal[]
 }
 
 model User {
@@ -157,9 +158,32 @@ model Paciente {
   estudios Estudio[]
   facturas Factura[]
   historia HistoriaClinicaEntry[]
+  portal   PacientePortal?
 
   @@unique([tenantId, dni])
   @@index([tenantId])
+}
+
+// Login del Portal del Paciente. Deliberadamente SIN policy de RLS —
+// como User, es una tabla global sin datos clínicos (solo credenciales +
+// a qué tenant/paciente corresponde), así que el login puede buscar por
+// username sin necesitar ya un tenant activo seteado (mismo problema que
+// resolvimos para User/Membership en el login de staff). Ningún dato de
+// salud vive acá: eso sigue 100% detrás de RLS en Paciente/Turno/Estudio,
+// a los que solo se accede después de autenticado, vía withTenantContext.
+model PacientePortal {
+  id           String   @id @default(cuid())
+  tenantId     String
+  pacienteId   String   @unique
+  // Memorable a propósito (inicial + DNI) para que no se lo olviden — la
+  // seguridad la da la contraseña random, no el usuario.
+  username     String   @unique
+  passwordHash String
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  paciente Paciente @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
 }
 
 model Profesional {

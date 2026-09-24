@@ -1,6 +1,8 @@
 "use server";
 
 import { z } from "zod";
+import { randomBytes } from "crypto";
+import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -169,6 +171,76 @@ export async function listarPacientes(query?: string) {
       orderBy: { apellido: "asc" },
       take: 100,
     })
+  );
+}
+
+// Sin 0/O/1/l/I — caracteres que se confunden fácil al copiar a mano.
+const ALFABETO_PASSWORD = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+
+function generarPassword(longitud = 10) {
+  const bytes = randomBytes(longitud);
+  return Array.from(bytes, (b) => ALFABETO_PASSWORD[b % ALFABETO_PASSWORD.length]).join("");
+}
+
+export interface AccesoPortalResult {
+  error?: string;
+  username?: string;
+  password?: string;
+}
+
+/**
+ * Genera (o regenera) el acceso al Portal del Paciente: usuario memorable
+ * (inicial + DNI, para que no se lo olviden) + contraseña aleatoria segura
+ * (no se puede volver a ver después de este llamado — solo queda el hash).
+ */
+export async function generarAccesoPortal(pacienteId: string): Promise<AccesoPortalResult> {
+  const session = await requireSession();
+  if (!permisosDe(session.rol).gestionarPacientes) {
+    return { error: "No tenés permiso para hacer esto." };
+  }
+
+  return withTenantContext(session.tenantId, async (tx) => {
+    const paciente = await tx.paciente.findUniqueOrThrow({ where: { id: pacienteId } });
+
+    const inicial = paciente.nombre.trim().charAt(0).toLowerCase() || "p";
+    let username = `${inicial}${paciente.dni}`;
+    let intento = 0;
+    while (await tx.pacientePortal.findUnique({ where: { username } })) {
+      intento++;
+      if (intento === 1) {
+        const inicialApellido = paciente.apellido.trim().charAt(0).toLowerCase();
+        username = `${inicial}${inicialApellido}${paciente.dni}`;
+      } else {
+        username = `${inicial}${paciente.dni}${intento}`;
+      }
+      if (intento > 5) break;
+    }
+
+    const password = generarPassword();
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await tx.pacientePortal.upsert({
+      where: { pacienteId },
+      update: { username, passwordHash, activo: true },
+      create: { tenantId: session.tenantId, pacienteId, username, passwordHash },
+    });
+
+    await audit(tx, {
+      tenantId: session.tenantId,
+      userId: session.userId,
+      accion: "CREATE",
+      entidad: "PacientePortal",
+      entidadId: pacienteId,
+    });
+
+    return { username, password };
+  });
+}
+
+export async function obtenerAccesoPortal(pacienteId: string) {
+  const session = await requireSession();
+  return withTenantContext(session.tenantId, (tx) =>
+    tx.pacientePortal.findUnique({ where: { pacienteId }, select: { username: true, activo: true } })
   );
 }
 

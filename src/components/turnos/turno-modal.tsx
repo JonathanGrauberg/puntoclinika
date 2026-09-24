@@ -51,6 +51,7 @@ export function TurnoModal({
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<TurnoFormState>({});
   const [pacienteId, setPacienteId] = useState(turno?.pacienteId ?? "");
+  const [confirmandoCancelar, setConfirmandoCancelar] = useState(false);
 
   const fechaDefault = toISODate(turno?.fechaHora ?? slot?.fecha ?? new Date());
   const horaDefault = turno ? toTimeValue(turno.fechaHora) : slot?.hora ?? "08:00";
@@ -69,7 +70,6 @@ export function TurnoModal({
 
   function handleCancelar() {
     if (!turno) return;
-    if (!confirm("¿Cancelar este turno?")) return;
     startTransition(async () => {
       await cancelarTurno(turno.id);
       onOpenChange(false);
@@ -173,14 +173,35 @@ export function TurnoModal({
 
             <div className="flex items-center justify-between gap-2 pt-2">
               {turno ? (
-                <button
-                  type="button"
-                  onClick={handleCancelar}
-                  disabled={pending}
-                  className="h-11 rounded-md border border-destructive/40 px-4 text-[15px] font-semibold text-destructive hover:bg-destructive/5"
-                >
-                  Cancelar turno
-                </button>
+                confirmandoCancelar ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-foreground">¿Seguro?</span>
+                    <button
+                      type="button"
+                      onClick={handleCancelar}
+                      disabled={pending}
+                      className="h-9 rounded-md bg-destructive px-3 text-sm font-semibold text-destructive-foreground hover:opacity-90 disabled:opacity-50"
+                    >
+                      {pending ? "Cancelando..." : "Sí, cancelar"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmandoCancelar(false)}
+                      className="h-9 rounded-md border border-border px-3 text-sm font-semibold text-foreground hover:bg-muted"
+                    >
+                      No
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmandoCancelar(true)}
+                    disabled={pending}
+                    className="h-11 rounded-md border border-destructive/40 px-4 text-[15px] font-semibold text-destructive hover:bg-destructive/5"
+                  >
+                    Cancelar turno
+                  </button>
+                )
               ) : (
                 <span />
               )}
