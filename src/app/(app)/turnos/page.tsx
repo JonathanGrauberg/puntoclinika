@@ -5,6 +5,7 @@ import { permisosDe } from "@/lib/permissions";
 import { listarProfesionales } from "@/lib/actions/profesionales";
 import { listarPracticas } from "@/lib/actions/practicas";
 import { listarPacientes } from "@/lib/actions/pacientes";
+import { listarConsultorios } from "@/lib/actions/consultorios";
 import { listarTurnosSemana } from "@/lib/actions/turnos";
 import { ProfesionalSelector } from "@/components/turnos/profesional-selector";
 import { TurnosAgenda } from "@/components/turnos/turnos-agenda";
@@ -73,9 +74,10 @@ export default async function TurnosPage({
   const weekStart = weekParam ? new Date(`${weekParam}T00:00:00`) : getMonday(new Date());
   const weekStartISO = toISODate(weekStart);
 
-  const [turnos, pacientes] = await Promise.all([
+  const [turnos, pacientes, consultorios] = await Promise.all([
     listarTurnosSemana(profesionalId, weekStartISO),
     listarPacientes(),
+    listarConsultorios(true),
   ]);
 
   return (
@@ -93,14 +95,17 @@ export default async function TurnosPage({
           id: t.id,
           pacienteId: t.pacienteId,
           practicaId: t.practicaId,
+          consultorioId: t.consultorioId,
           fechaHora: t.fechaHora,
           duracionMin: t.duracionMin,
+          estado: t.estado,
           notas: t.notas,
           paciente: { nombre: t.paciente.nombre, apellido: t.paciente.apellido },
           practica: { nombre: t.practica.nombre },
         }))}
         pacientes={pacientes}
         practicas={practicas.map((p) => ({ id: p.id, nombre: p.nombre, duracionMin: p.duracionMin }))}
+        consultorios={consultorios.map((c) => ({ id: c.id, nombre: c.nombre }))}
         puedeGestionar={permisos.gestionarTurnos}
       />
     </>

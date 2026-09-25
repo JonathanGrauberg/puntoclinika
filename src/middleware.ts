@@ -17,5 +17,6 @@ export const config = {
   runtime: "nodejs",
   // /portal tiene su propia sesión y su propio guard (requireSesionPortal),
   // completamente separados de la sesión de staff — no debe pasar por acá.
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|brand|portal).*)"],
+  // /kiosco es público (pantalla en sala de espera, sin login de ningún tipo).
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|brand|portal|kiosco).*)"],
 };

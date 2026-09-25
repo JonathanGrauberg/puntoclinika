@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
-import { listarConsultorios } from "@/lib/actions/consultorios";
+import { listarConsultorios, obtenerTenantSlug } from "@/lib/actions/consultorios";
 import { ConsultorioQuickForm } from "@/components/configuracion/consultorio-quick-form";
 
 export default async function ConsultoriosPage() {
@@ -10,11 +10,23 @@ export default async function ConsultoriosPage() {
   if (!permisosDe(session.rol).gestionarConfiguracion) {
     redirect("/dashboard");
   }
-  const consultorios = await listarConsultorios();
+  const [consultorios, slug] = await Promise.all([listarConsultorios(), obtenerTenantSlug()]);
+  const kioscoPath = `/kiosco/${slug}`;
 
   return (
     <>
       <PageTitle title="Consultorios" />
+      <div className="mb-4 rounded-md border border-border bg-card p-5">
+        <h2 className="mb-1 text-sm font-semibold text-foreground">Pantalla de autocheck-in</h2>
+        <p className="mb-2 text-sm text-muted-foreground">
+          Abrí este link en la tablet o pantalla de la sala de espera. No pide login — cualquiera que
+          entre a esta URL puede registrar su llegada con su DNI.
+        </p>
+        <a href={kioscoPath} target="_blank" rel="noopener noreferrer" className="font-mono text-sm text-foreground underline">
+          {kioscoPath}
+        </a>
+      </div>
+
       <div className="mb-4 rounded-md border border-border bg-card p-5">
         <h2 className="mb-3 text-sm font-semibold text-foreground">Agregar consultorio</h2>
         <ConsultorioQuickForm />

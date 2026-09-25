@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { TurnoModal, type PracticaOption, type TurnoExistente } from "./turno-modal";
+import { TurnoModal, type PracticaOption, type ConsultorioOption, type TurnoExistente } from "./turno-modal";
 import type { PacienteOption } from "@/components/pacientes/paciente-picker";
 import { addDays, diaLabel, toISODate } from "@/lib/date-utils";
 
@@ -19,8 +19,10 @@ interface TurnoConDatos {
   id: string;
   pacienteId: string;
   practicaId: string;
+  consultorioId: string | null;
   fechaHora: Date;
   duracionMin: number;
+  estado: string;
   notas: string | null;
   paciente: { nombre: string; apellido: string };
   practica: { nombre: string };
@@ -32,6 +34,7 @@ export function TurnosAgenda({
   turnos,
   pacientes,
   practicas,
+  consultorios,
   puedeGestionar,
 }: {
   weekStart: Date;
@@ -39,6 +42,7 @@ export function TurnosAgenda({
   turnos: TurnoConDatos[];
   pacientes: PacienteOption[];
   practicas: PracticaOption[];
+  consultorios: ConsultorioOption[];
   puedeGestionar: boolean;
 }) {
   const router = useRouter();
@@ -68,6 +72,7 @@ export function TurnosAgenda({
       pacienteId: turno.pacienteId,
       profesionalId,
       practicaId: turno.practicaId,
+      consultorioId: turno.consultorioId,
       fechaHora: turno.fechaHora,
       notas: turno.notas,
     });
@@ -169,7 +174,13 @@ export function TurnosAgenda({
                 };
                 const contenido = (
                   <>
-                    <p className="truncate text-xs font-semibold">
+                    <p className="flex items-center gap-1 truncate text-xs font-semibold">
+                      {t.estado === "EN_ESPERA" && (
+                        <span
+                          className="h-1.5 w-1.5 shrink-0 rounded-full bg-success"
+                          title="Llegó — en sala de espera"
+                        />
+                      )}
                       {t.paciente.apellido}, {t.paciente.nombre}
                     </p>
                     <p className="truncate text-[11px] opacity-80">{t.practica.nombre}</p>
@@ -212,6 +223,7 @@ export function TurnosAgenda({
         profesionalId={profesionalId}
         pacientes={pacientes}
         practicas={practicas}
+        consultorios={consultorios}
       />
     </div>
   );

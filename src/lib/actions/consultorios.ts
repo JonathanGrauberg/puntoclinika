@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/session";
 import { withTenantContext } from "@/lib/tenant-context";
+import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { permisosDe } from "@/lib/permissions";
 
@@ -55,4 +56,12 @@ export async function listarConsultorios(soloActivos = false) {
       orderBy: { nombre: "asc" },
     })
   );
+}
+
+/** Slug del centro, para armarle a la secretaría el link de la pantalla de kiosco. */
+export async function obtenerTenantSlug() {
+  const session = await requireSession();
+  // Tenant no lleva policy de RLS (ver schema.prisma) — se busca directo por id.
+  const tenant = await prisma.tenant.findUniqueOrThrow({ where: { id: session.tenantId } });
+  return tenant.slug;
 }

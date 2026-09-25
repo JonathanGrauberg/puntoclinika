@@ -14,11 +14,17 @@ export interface PracticaOption {
   duracionMin: number;
 }
 
+export interface ConsultorioOption {
+  id: string;
+  nombre: string;
+}
+
 export interface TurnoExistente {
   id: string;
   pacienteId: string;
   profesionalId: string;
   practicaId: string;
+  consultorioId: string | null;
   fechaHora: Date;
   notas: string | null;
 }
@@ -39,6 +45,7 @@ export function TurnoModal({
   profesionalId,
   pacientes,
   practicas,
+  consultorios,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -47,6 +54,7 @@ export function TurnoModal({
   profesionalId: string;
   pacientes: PacienteOption[];
   practicas: PracticaOption[];
+  consultorios: ConsultorioOption[];
 }) {
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<TurnoFormState>({});
@@ -126,6 +134,27 @@ export function TurnoModal({
                 ))}
               </select>
             </div>
+
+            {consultorios.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="consultorioId" className={labelClass}>
+                  Consultorio
+                </label>
+                <select
+                  id="consultorioId"
+                  name="consultorioId"
+                  defaultValue={turno?.consultorioId ?? ""}
+                  className={inputClass}
+                >
+                  <option value="">Sin asignar</option>
+                  {consultorios.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
