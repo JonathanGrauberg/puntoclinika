@@ -34,6 +34,7 @@ model Tenant {
   pacientes   Paciente[]
   profesionales Profesional[]
   practicas   Practica[]
+  consultorios Consultorio[]
   turnos      Turno[]
   estudios    Estudio[]
   estudioArchivos EstudioArchivo[]
@@ -226,6 +227,22 @@ model Practica {
   @@index([tenantId])
 }
 
+// Dónde queda cada consultorio/sala físico del centro — hoy solo para
+// asignárselo a un turno; el kiosco de autocheck-in (fase 2, pendiente)
+// lo va a usar para indicarle al paciente a dónde ir.
+model Consultorio {
+  id       String  @id @default(cuid())
+  tenantId String
+  nombre   String
+  piso     String?
+  activo   Boolean @default(true)
+
+  tenant Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  turnos Turno[]
+
+  @@index([tenantId])
+}
+
 enum EstadoTurno {
   RESERVADO
   CONFIRMADO
@@ -242,6 +259,7 @@ model Turno {
   pacienteId    String
   profesionalId String
   practicaId    String
+  consultorioId String?
   fechaHora     DateTime
   duracionMin   Int
   estado        EstadoTurno @default(RESERVADO)
@@ -249,10 +267,11 @@ model Turno {
   notas         String?
   createdAt     DateTime    @default(now())
 
-  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  paciente    Paciente    @relation(fields: [pacienteId], references: [id])
-  profesional Profesional @relation(fields: [profesionalId], references: [id])
-  practica    Practica    @relation(fields: [practicaId], references: [id])
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  paciente    Paciente     @relation(fields: [pacienteId], references: [id])
+  profesional Profesional  @relation(fields: [profesionalId], references: [id])
+  practica    Practica     @relation(fields: [practicaId], references: [id])
+  consultorio Consultorio? @relation(fields: [consultorioId], references: [id])
   estudios    Estudio[]
   facturas    Factura[]
 

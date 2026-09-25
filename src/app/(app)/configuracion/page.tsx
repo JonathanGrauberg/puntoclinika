@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Stethoscope, ClipboardList, UsersRound } from "lucide-react";
+import { Stethoscope, ClipboardList, UsersRound, DoorOpen } from "lucide-react";
 import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
@@ -23,6 +23,12 @@ const items = [
     label: "Usuarios",
     desc: "Quién puede entrar al sistema y con qué rol.",
     icon: UsersRound,
+  },
+  {
+    href: "/configuracion/consultorios",
+    label: "Consultorios",
+    desc: "Salas o consultorios físicos del centro, para asignar a los turnos.",
+    icon: DoorOpen,
   },
 ];
 

@@ -18,6 +18,7 @@ const ENTIDAD_LABEL: Record<string, string> = {
   Practica: "una práctica",
   Membership: "un usuario",
   Estudio: "un estudio",
+  Consultorio: "un consultorio",
 };
 
 export default async function AuditoriaPage() {
