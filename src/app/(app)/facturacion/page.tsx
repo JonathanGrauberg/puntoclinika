@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { Shell } from "@/components/app-shell/shell";
+import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { listarFacturas } from "@/lib/actions/facturacion";
@@ -16,13 +16,8 @@ export default async function FacturacionPage() {
   const total = facturas.reduce((acc, f) => acc + Number(f.montoTotal), 0);
 
   return (
-    <Shell
-      title="Facturación"
-      tenantName={session.tenantName}
-      userName={session.userName}
-      rol={session.rol}
-      enabledModules={session.enabledModules}
-    >
+    <>
+      <PageTitle title="Facturación" />
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="rounded-md border border-border bg-card px-5 py-3">
           <p className="text-xs text-muted-foreground">
@@ -86,6 +81,6 @@ export default async function FacturacionPage() {
           </tbody>
         </table>
       </div>
-    </Shell>
+    </>
   );
 }

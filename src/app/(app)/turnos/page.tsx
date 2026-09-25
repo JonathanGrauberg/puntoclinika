@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Shell } from "@/components/app-shell/shell";
+import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules, obtenerMiProfesionalId } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { listarProfesionales } from "@/lib/actions/profesionales";
@@ -19,13 +19,6 @@ export default async function TurnosPage({
   const permisos = permisosDe(session.rol);
   const { profesionalId: profesionalIdParam, week: weekParam } = await searchParams;
 
-  const shellProps = {
-    tenantName: session.tenantName,
-    userName: session.userName,
-    rol: session.rol,
-    enabledModules: session.enabledModules,
-  };
-
   const [profesionales, practicas] = await Promise.all([
     listarProfesionales(true),
     listarPracticas(true),
@@ -33,24 +26,26 @@ export default async function TurnosPage({
 
   if (profesionales.length === 0) {
     return (
-      <Shell title="Turnos" {...shellProps}>
+      <>
+        <PageTitle title="Turnos" />
         <EmptyState
           mensaje="Todavía no cargaste ningún profesional."
           href="/configuracion/profesionales"
           cta="Agregar profesional"
         />
-      </Shell>
+      </>
     );
   }
   if (practicas.length === 0) {
     return (
-      <Shell title="Turnos" {...shellProps}>
+      <>
+        <PageTitle title="Turnos" />
         <EmptyState
           mensaje="Todavía no cargaste ninguna práctica — hace falta al menos una para poder dar turnos."
           href="/configuracion/practicas"
           cta="Agregar práctica"
         />
-      </Shell>
+      </>
     );
   }
 
@@ -62,13 +57,14 @@ export default async function TurnosPage({
     const miId = await obtenerMiProfesionalId(session.userId, session.tenantId);
     if (!miId) {
       return (
-        <Shell title="Turnos" {...shellProps}>
+        <>
+          <PageTitle title="Turnos" />
           <EmptyState
             mensaje="Tu usuario todavía no está vinculado a un profesional. Pedile a un administrador que te vincule desde Configuración → Usuarios."
             href="/dashboard"
             cta="Volver al inicio"
           />
-        </Shell>
+        </>
       );
     }
     profesionalId = miId;
@@ -83,7 +79,8 @@ export default async function TurnosPage({
   ]);
 
   return (
-    <Shell title="Turnos" {...shellProps}>
+    <>
+      <PageTitle title="Turnos" />
       {permisos.verTodosLosTurnos && (
         <div className="mb-4">
           <ProfesionalSelector profesionales={profesionales} value={profesionalId} week={weekStartISO} />
@@ -106,7 +103,7 @@ export default async function TurnosPage({
         practicas={practicas.map((p) => ({ id: p.id, nombre: p.nombre, duracionMin: p.duracionMin }))}
         puedeGestionar={permisos.gestionarTurnos}
       />
-    </Shell>
+    </>
   );
 }
 

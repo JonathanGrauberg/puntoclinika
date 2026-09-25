@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Shell } from "@/components/app-shell/shell";
+import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { listarPracticas } from "@/lib/actions/practicas";
@@ -15,13 +15,8 @@ export default async function PracticasPage() {
   const practicas = await listarPracticas();
 
   return (
-    <Shell
-      title="Prácticas"
-      tenantName={session.tenantName}
-      userName={session.userName}
-      rol={session.rol}
-      enabledModules={session.enabledModules}
-    >
+    <>
+      <PageTitle title="Prácticas" />
       <div className="mb-4 rounded-md border border-border bg-card p-5">
         <h2 className="mb-3 text-sm font-semibold text-foreground">Agregar práctica</h2>
         <PracticaQuickForm />
@@ -56,6 +51,6 @@ export default async function PracticasPage() {
           </tbody>
         </table>
       </div>
-    </Shell>
+    </>
   );
 }

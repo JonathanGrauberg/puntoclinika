@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Shell } from "@/components/app-shell/shell";
+import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { listarTurnosParaCobrar } from "@/lib/actions/facturacion";
@@ -25,13 +25,8 @@ export default async function NuevoCobroPage({
   const turnos = await listarTurnosParaCobrar(fechaISO);
 
   return (
-    <Shell
-      title="Nuevo cobro"
-      tenantName={session.tenantName}
-      userName={session.userName}
-      rol={session.rol}
-      enabledModules={session.enabledModules}
-    >
+    <>
+      <PageTitle title="Nuevo cobro" />
       <div className="mb-4 flex items-center gap-2">
         <Link
           href={`?fecha=${toISODate(addDays(fecha, -1))}`}
@@ -61,6 +56,6 @@ export default async function NuevoCobroPage({
           practica: { nombre: t.practica.nombre, precioParticular: Number(t.practica.precioParticular) },
         }))}
       />
-    </Shell>
+    </>
   );
 }

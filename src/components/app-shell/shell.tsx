@@ -7,9 +7,9 @@ import type { ModuloKey } from "@prisma/client";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Sidebar } from "./sidebar";
 import { Topbar } from "./topbar";
+import { PageTitleProvider } from "./page-title-context";
 
 interface ShellProps {
-  title: string;
   tenantName: string;
   userName: string;
   rol: string;
@@ -19,7 +19,7 @@ interface ShellProps {
 
 const COLLAPSE_KEY = "clinika:sidebar-collapsed";
 
-export function Shell({ title, tenantName, userName, rol, enabledModules, children }: ShellProps) {
+export function Shell({ tenantName, userName, rol, enabledModules, children }: ShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -44,6 +44,7 @@ export function Shell({ title, tenantName, userName, rol, enabledModules, childr
   }
 
   return (
+    <PageTitleProvider>
     <TooltipProvider delayDuration={300}>
       <div className="flex min-h-screen">
         <div className={`hidden shrink-0 transition-[width] duration-200 lg:block ${collapsed ? "w-16" : "w-60"}`}>
@@ -85,10 +86,11 @@ export function Shell({ title, tenantName, userName, rol, enabledModules, childr
         </Dialog.Root>
 
         <div className="flex min-w-0 flex-1 flex-col gap-4 p-3 lg:p-4">
-          <Topbar title={title} userName={userName} onOpenMenu={() => setMobileOpen(true)} />
+          <Topbar userName={userName} onOpenMenu={() => setMobileOpen(true)} />
           <main className="flex-1">{children}</main>
         </div>
       </div>
     </TooltipProvider>
+    </PageTitleProvider>
   );
 }

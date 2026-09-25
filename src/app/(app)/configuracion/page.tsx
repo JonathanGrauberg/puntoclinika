@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Stethoscope, ClipboardList, UsersRound } from "lucide-react";
-import { Shell } from "@/components/app-shell/shell";
+import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 
@@ -33,13 +33,8 @@ export default async function ConfiguracionPage() {
   }
 
   return (
-    <Shell
-      title="Configuración"
-      tenantName={session.tenantName}
-      userName={session.userName}
-      rol={session.rol}
-      enabledModules={session.enabledModules}
-    >
+    <>
+      <PageTitle title="Configuración" />
       <div className="grid gap-3 sm:grid-cols-2">
         {items.map((item) => (
           <Link
@@ -57,6 +52,6 @@ export default async function ConfiguracionPage() {
           </Link>
         ))}
       </div>
-    </Shell>
+    </>
   );
 }

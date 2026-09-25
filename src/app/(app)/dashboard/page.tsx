@@ -1,4 +1,4 @@
-import { Shell } from "@/components/app-shell/shell";
+import { PageTitle } from "@/components/app-shell/page-title-context";
 import { CalendarDays, FileImage, Receipt, Users } from "lucide-react";
 import { requireSessionWithModules, obtenerMiProfesionalId } from "@/lib/session";
 import { withTenantContext } from "@/lib/tenant-context";
@@ -46,13 +46,8 @@ export default async function DashboardPage() {
   ];
 
   return (
-    <Shell
-      title="Inicio"
-      tenantName={session.tenantName}
-      userName={session.userName}
-      rol={session.rol}
-      enabledModules={session.enabledModules}
-    >
+    <>
+      <PageTitle title="Inicio" />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <div key={stat.label} className="flex flex-col gap-3 rounded-md border border-border bg-card p-4">
@@ -73,6 +68,6 @@ export default async function DashboardPage() {
           Acá va a aparecer la agenda del día una vez que conectemos el módulo de Turnos.
         </p>
       </div>
-    </Shell>
+    </>
   );
 }

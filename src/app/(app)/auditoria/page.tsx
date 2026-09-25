@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Shell } from "@/components/app-shell/shell";
+import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { listarAuditoria } from "@/lib/actions/auditoria";
@@ -28,13 +28,8 @@ export default async function AuditoriaPage() {
   const entradas = await listarAuditoria();
 
   return (
-    <Shell
-      title="Auditoría"
-      tenantName={session.tenantName}
-      userName={session.userName}
-      rol={session.rol}
-      enabledModules={session.enabledModules}
-    >
+    <>
+      <PageTitle title="Auditoría" />
       <div className="overflow-hidden rounded-md border border-border">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border bg-muted/50 text-xs uppercase text-muted-foreground">
@@ -72,6 +67,6 @@ export default async function AuditoriaPage() {
           </tbody>
         </table>
       </div>
-    </Shell>
+    </>
   );
 }

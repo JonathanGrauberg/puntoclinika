@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Shell } from "@/components/app-shell/shell";
+import { PageTitle } from "@/components/app-shell/page-title-context";
 import { PacienteForm } from "@/components/pacientes/paciente-form";
 import { PortalAcceso } from "@/components/pacientes/portal-acceso";
 import { requireSessionWithModules } from "@/lib/session";
@@ -15,13 +15,8 @@ export default async function EditarPacientePage({ params }: { params: Promise<{
   if (!paciente) notFound();
 
   return (
-    <Shell
-      title={`${paciente.apellido}, ${paciente.nombre}`}
-      tenantName={session.tenantName}
-      userName={session.userName}
-      rol={session.rol}
-      enabledModules={session.enabledModules}
-    >
+    <>
+      <PageTitle title={`${paciente.apellido}, ${paciente.nombre}`} />
       <div className="flex max-w-2xl flex-col gap-4">
         <div className="rounded-md border border-border bg-card p-6">
           <PacienteForm mode="edit" paciente={paciente} readOnly={!permisos.gestionarPacientes} />
@@ -34,6 +29,6 @@ export default async function EditarPacientePage({ params }: { params: Promise<{
           </div>
         )}
       </div>
-    </Shell>
+    </>
   );
 }

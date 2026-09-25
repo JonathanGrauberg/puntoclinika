@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Search, UserPlus } from "lucide-react";
-import { Shell } from "@/components/app-shell/shell";
+import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { listarPacientes } from "@/lib/actions/pacientes";
@@ -16,13 +16,8 @@ export default async function PacientesPage({
   const pacientes = await listarPacientes(q);
 
   return (
-    <Shell
-      title="Pacientes"
-      tenantName={session.tenantName}
-      userName={session.userName}
-      rol={session.rol}
-      enabledModules={session.enabledModules}
-    >
+    <>
+      <PageTitle title="Pacientes" />
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <form className="relative w-full sm:max-w-xs">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -80,6 +75,6 @@ export default async function PacientesPage({
           </tbody>
         </table>
       </div>
-    </Shell>
+    </>
   );
 }

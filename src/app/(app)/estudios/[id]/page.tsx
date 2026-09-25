@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Shell } from "@/components/app-shell/shell";
+import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { obtenerEstudio } from "@/lib/actions/estudios";
@@ -16,13 +16,8 @@ export default async function EstudioDetallePage({ params }: { params: Promise<{
   if (!estudio) notFound();
 
   return (
-    <Shell
-      title={`${estudio.paciente.apellido}, ${estudio.paciente.nombre}`}
-      tenantName={session.tenantName}
-      userName={session.userName}
-      rol={session.rol}
-      enabledModules={session.enabledModules}
-    >
+    <>
+      <PageTitle title={`${estudio.paciente.apellido}, ${estudio.paciente.nombre}`} />
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="flex flex-col gap-4">
           <div className="rounded-md border border-border bg-card p-5">
@@ -95,6 +90,6 @@ export default async function EstudioDetallePage({ params }: { params: Promise<{
           )}
         </div>
       </div>
-    </Shell>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Shell } from "@/components/app-shell/shell";
+import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { listarProfesionales } from "@/lib/actions/profesionales";
@@ -13,13 +13,8 @@ export default async function ProfesionalesPage() {
   const profesionales = await listarProfesionales();
 
   return (
-    <Shell
-      title="Profesionales"
-      tenantName={session.tenantName}
-      userName={session.userName}
-      rol={session.rol}
-      enabledModules={session.enabledModules}
-    >
+    <>
+      <PageTitle title="Profesionales" />
       <div className="mb-4 rounded-md border border-border bg-card p-5">
         <h2 className="mb-3 text-sm font-semibold text-foreground">Agregar profesional</h2>
         <ProfesionalQuickForm />
@@ -54,6 +49,6 @@ export default async function ProfesionalesPage() {
           </tbody>
         </table>
       </div>
-    </Shell>
+    </>
   );
 }

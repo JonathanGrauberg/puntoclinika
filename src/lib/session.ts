@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import type { ModuloKey } from "@prisma/client";
 import { auth } from "@/auth";
@@ -17,8 +18,12 @@ export interface ActiveSession {
  * si no hay sesión, o si el usuario no tiene ningún centro asignado
  * (memberships vacío — no debería pasar en uso normal, pero sin esto
  * tenantId quedaría undefined y rompería todo lo que dependa de RLS).
+ *
+ * Envuelta en `cache()`: el layout y la page de una misma request la llaman
+ * cada uno por su lado, pero así comparten el resultado en vez de duplicar
+ * la consulta.
  */
-export async function requireSession(): Promise<ActiveSession> {
+export const requireSession = cache(async (): Promise<ActiveSession> => {
   const session = await auth();
   if (!session?.user || !session.user.tenantId) {
     redirect("/login");
@@ -33,7 +38,7 @@ export async function requireSession(): Promise<ActiveSession> {
     // de arranque el rol más amplio (SECRETARIA) — permisosDe("") = sin permisos.
     rol: session.user.rol ?? "",
   };
-}
+});
 
 /** Profesional vinculado al usuario actual (relevante para el rol MEDICO). */
 export async function obtenerMiProfesionalId(userId: string, tenantId: string) {
@@ -45,14 +50,16 @@ export async function obtenerMiProfesionalId(userId: string, tenantId: string) {
 
 /**
  * Sesión activa + módulos habilitados del tenant, para pasarle directo al
- * Shell. La mayoría de las pages autenticadas empiezan con esto.
+ * Shell. Cacheada por el mismo motivo que `requireSession`: el layout la usa
+ * para el Shell y cada page la vuelve a llamar para su propia lógica
+ * (permisos, tenantId), sin pagar la consulta de nuevo.
  */
-export async function requireSessionWithModules(): Promise<
+export const requireSessionWithModules = cache(async (): Promise<
   ActiveSession & { enabledModules: ModuloKey[] }
-> {
+> => {
   const session = await requireSession();
   const enabledModules = await withTenantContext(session.tenantId, (tx) =>
     listEnabledModules(tx, session.tenantId)
   );
   return { ...session, enabledModules };
-}
+});

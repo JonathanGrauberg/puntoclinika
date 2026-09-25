@@ -5,16 +5,16 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cerrarSesion } from "@/lib/actions/auth";
+import { usePageTitle } from "./page-title-context";
 
 export function Topbar({
-  title,
   onOpenMenu,
   userName,
 }: {
-  title: string;
   onOpenMenu: () => void;
   userName: string;
 }) {
+  const title = usePageTitle();
   return (
     <header className="flex items-center justify-between py-1">
       <div className="flex items-center gap-3">
