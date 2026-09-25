@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { loginAction } from "./actions";
 
 export default async function LoginPage({
@@ -46,9 +47,14 @@ export default async function LoginPage({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="password" className="text-sm font-semibold text-foreground">
-              Contraseña
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="password" className="text-sm font-semibold text-foreground">
+                Contraseña
+              </label>
+              <Link href="/login/olvide-contrasena" className="text-xs text-muted-foreground underline underline-offset-2">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
             <input
               id="password"
               name="password"

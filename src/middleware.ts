@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
-  const isLoginPage = req.nextUrl.pathname === "/login";
+  // /login/olvide-contrasena y /login/restablecer también son públicas
+  // (recuperación de contraseña, antes de tener sesión).
+  const isLoginPage = req.nextUrl.pathname.startsWith("/login");
 
   if (!isLoggedIn && !isLoginPage) {
     return NextResponse.redirect(new URL("/login", req.nextUrl));

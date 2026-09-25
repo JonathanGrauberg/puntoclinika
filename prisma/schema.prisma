@@ -53,6 +53,26 @@ model User {
 
   memberships   Membership[]
   profesional   Profesional?
+  passwordResetTokens PasswordResetToken[]
+}
+
+// Recuperación de contraseña del login de staff. Global como User (sin
+// tenantId, sin policy de RLS) — el hash es sha256, no bcrypt: el token
+// nace con 256 bits de entropía (crypto.randomBytes), así que no hace
+// falta (ni conviene) pagar el costo de bcrypt como si fuera una
+// contraseña humana. Un solo uso: se marca usedAt al resetear y ahí mismo
+// se invalidan los demás tokens vigentes del mismo usuario.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 enum RolTenant {
