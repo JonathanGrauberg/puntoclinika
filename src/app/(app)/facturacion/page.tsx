@@ -5,6 +5,7 @@ import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { listarFacturas } from "@/lib/actions/facturacion";
 import { METODO_PAGO_LABEL } from "@/lib/metodos-pago";
+import { AnularFacturaButton } from "@/components/facturacion/anular-factura-button";
 
 const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
@@ -13,7 +14,9 @@ export default async function FacturacionPage() {
   const permisos = permisosDe(session.rol);
   const facturas = await listarFacturas();
 
-  const total = facturas.reduce((acc, f) => acc + Number(f.montoTotal), 0);
+  const total = facturas
+    .filter((f) => f.estado === "PAGADA")
+    .reduce((acc, f) => acc + Number(f.montoTotal), 0);
 
   return (
     <>
@@ -46,18 +49,23 @@ export default async function FacturacionPage() {
               <th className="px-4 py-3 font-semibold">Práctica</th>
               <th className="px-4 py-3 font-semibold">Método</th>
               <th className="px-4 py-3 font-semibold text-right">Monto</th>
+              <th className="px-4 py-3 font-semibold">Estado</th>
+              {permisos.gestionarFacturacion && <th className="px-4 py-3" />}
             </tr>
           </thead>
           <tbody>
             {facturas.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                   Todavía no hay cobros registrados.
                 </td>
               </tr>
             )}
             {facturas.map((f) => (
-              <tr key={f.id} className="border-b border-border last:border-0">
+              <tr
+                key={f.id}
+                className={`border-b border-border last:border-0 ${f.estado === "ANULADA" ? "opacity-50" : ""}`}
+              >
                 <td className="px-4 py-3 text-muted-foreground">
                   {new Date(f.createdAt).toLocaleDateString("es-AR")}
                 </td>
@@ -76,6 +84,22 @@ export default async function FacturacionPage() {
                 <td className="px-4 py-3 text-right font-semibold text-foreground">
                   {currency.format(Number(f.montoTotal))}
                 </td>
+                <td className="px-4 py-3">
+                  {f.estado === "ANULADA" ? (
+                    <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+                      Anulada
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-success/15 px-2.5 py-1 text-xs font-semibold text-success">
+                      Pagada
+                    </span>
+                  )}
+                </td>
+                {permisos.gestionarFacturacion && (
+                  <td className="px-4 py-3 text-right">
+                    {f.estado === "PAGADA" && <AnularFacturaButton facturaId={f.id} />}
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

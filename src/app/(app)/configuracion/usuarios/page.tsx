@@ -2,9 +2,10 @@ import { redirect } from "next/navigation";
 import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
-import { listarUsuarios } from "@/lib/actions/usuarios";
+import { listarUsuarios, toggleMembershipActivo } from "@/lib/actions/usuarios";
 import { listarProfesionalesSinUsuario } from "@/lib/actions/profesionales";
 import { UsuarioQuickForm } from "@/components/configuracion/usuario-quick-form";
+import { ActivoToggle } from "@/components/configuracion/activo-toggle";
 
 const ROL_LABEL: Record<string, string> = {
   ADMIN: "Administrador",
@@ -43,14 +44,22 @@ export default async function UsuariosPage() {
               <th className="px-4 py-3 font-semibold">Nombre</th>
               <th className="px-4 py-3 font-semibold">Email</th>
               <th className="px-4 py-3 font-semibold">Rol</th>
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
             {usuarios.map((u) => (
-              <tr key={u.membershipId} className="border-b border-border last:border-0">
+              <tr key={u.membershipId} className={`border-b border-border last:border-0 ${!u.activo ? "opacity-50" : ""}`}>
                 <td className="px-4 py-3 text-foreground">{u.nombre}</td>
                 <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
                 <td className="px-4 py-3 text-muted-foreground">{ROL_LABEL[u.rol] ?? u.rol}</td>
+                <td className="px-4 py-3 text-right">
+                  {u.userId === session.userId ? (
+                    <span className="text-xs text-muted-foreground">Vos</span>
+                  ) : (
+                    <ActivoToggle id={u.membershipId} activo={u.activo} toggleAction={toggleMembershipActivo} />
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

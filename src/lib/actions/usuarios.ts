@@ -105,10 +105,58 @@ export async function listarUsuarios() {
     const userById = new Map(users.map((u) => [u.id, u]));
     return memberships.map((m) => ({
       membershipId: m.id,
+      userId: m.userId,
       rol: m.rol,
       activo: m.activo,
       email: userById.get(m.userId)?.email ?? "—",
       nombre: userById.get(m.userId)?.nombre ?? "—",
     }));
   });
+}
+
+export interface ToggleUsuarioState {
+  error?: string;
+}
+
+/**
+ * Desactiva/reactiva el acceso de un usuario a ESTE centro (no su cuenta
+ * global — puede seguir teniendo membership activa en otro tenant). Al no
+ * poder reconstruir el token en cada request (sesión JWT, sin DB hit por
+ * request — ver session.ts), esto recién surte efecto en el próximo login
+ * del usuario afectado, no corta una sesión ya abierta al instante.
+ */
+export async function toggleMembershipActivo(
+  membershipId: string,
+  activo: boolean
+): Promise<ToggleUsuarioState | void> {
+  const session = await requireSession();
+  if (!permisosDe(session.rol).gestionarConfiguracion) {
+    return { error: "No tenés permiso para hacer esto." };
+  }
+
+  try {
+    await withTenantContext(session.tenantId, async (tx) => {
+      const membership = await tx.membership.findUniqueOrThrow({ where: { id: membershipId } });
+      if (membership.userId === session.userId && !activo) {
+        throw new Error("NO_AUTODESACTIVAR");
+      }
+
+      await tx.membership.update({ where: { id: membershipId }, data: { activo } });
+      await audit(tx, {
+        tenantId: session.tenantId,
+        userId: session.userId,
+        accion: "UPDATE",
+        entidad: "Membership",
+        entidadId: membershipId,
+        detalle: { activo },
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "NO_AUTODESACTIVAR") {
+      return { error: "No te podés desactivar a vos mismo." };
+    }
+    throw error;
+  }
+
+  revalidatePath("/configuracion/usuarios");
 }

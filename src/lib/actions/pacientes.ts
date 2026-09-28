@@ -11,21 +11,26 @@ import { withTenantContext } from "@/lib/tenant-context";
 import { audit, auditView } from "@/lib/audit";
 import { permisosDe } from "@/lib/permissions";
 
-const pacienteSchema = z.object({
-  dni: z
-    .string()
-    .trim()
-    .min(6, "El DNI tiene que tener al menos 6 dígitos")
-    .max(15, "DNI demasiado largo")
-    .regex(/^[0-9.]+$/, "El DNI solo puede tener números"),
-  nombre: z.string().trim().min(1, "El nombre es obligatorio").max(100),
-  apellido: z.string().trim().min(1, "El apellido es obligatorio").max(100),
-  fechaNacimiento: z.string().optional(),
-  telefono: z.string().trim().max(30).optional(),
-  email: z.union([z.string().trim().email("Email inválido"), z.literal("")]).optional(),
-  alergias: z.string().trim().max(500).optional(),
-  obraSocialTexto: z.string().trim().max(150).optional(),
-});
+const pacienteSchema = z
+  .object({
+    tipoDocumento: z.enum(["DNI", "PASAPORTE", "OTRO"]).default("DNI"),
+    dni: z.string().trim().min(6, "Tiene que tener al menos 6 caracteres").max(15, "Demasiado largo"),
+    nombre: z.string().trim().min(1, "El nombre es obligatorio").max(100),
+    apellido: z.string().trim().min(1, "El apellido es obligatorio").max(100),
+    fechaNacimiento: z.string().optional(),
+    sexo: z.enum(["MASCULINO", "FEMENINO", "OTRO"]).optional().or(z.literal("")),
+    domicilio: z.string().trim().max(200).optional(),
+    telefono: z.string().trim().max(30).optional(),
+    email: z.union([z.string().trim().email("Email inválido"), z.literal("")]).optional(),
+    contactoEmergenciaNombre: z.string().trim().max(100).optional(),
+    contactoEmergenciaTelefono: z.string().trim().max(30).optional(),
+    alergias: z.string().trim().max(500).optional(),
+    obraSocialTexto: z.string().trim().max(150).optional(),
+  })
+  .refine((data) => data.tipoDocumento !== "DNI" || /^[0-9.]+$/.test(data.dni), {
+    message: "El DNI solo puede tener números",
+    path: ["dni"],
+  });
 
 export interface PacienteFormState {
   error?: string;
@@ -77,12 +82,17 @@ export async function crearPaciente(formData: FormData): Promise<PacienteFormSta
       const created = await tx.paciente.create({
         data: {
           tenantId: session.tenantId,
+          tipoDocumento: data.tipoDocumento,
           dni: data.dni,
           nombre: data.nombre,
           apellido: data.apellido,
           fechaNacimiento: data.fechaNacimiento ? new Date(data.fechaNacimiento) : null,
+          sexo: data.sexo || null,
+          domicilio: data.domicilio || null,
           telefono: data.telefono || null,
           email: data.email || null,
+          contactoEmergenciaNombre: data.contactoEmergenciaNombre || null,
+          contactoEmergenciaTelefono: data.contactoEmergenciaTelefono || null,
           alergias: data.alergias || null,
           obraSocialTexto: data.obraSocialTexto || null,
         },
@@ -123,12 +133,17 @@ export async function actualizarPaciente(id: string, formData: FormData): Promis
       await tx.paciente.update({
         where: { id },
         data: {
+          tipoDocumento: data.tipoDocumento,
           dni: data.dni,
           nombre: data.nombre,
           apellido: data.apellido,
           fechaNacimiento: data.fechaNacimiento ? new Date(data.fechaNacimiento) : null,
+          sexo: data.sexo || null,
+          domicilio: data.domicilio || null,
           telefono: data.telefono || null,
           email: data.email || null,
+          contactoEmergenciaNombre: data.contactoEmergenciaNombre || null,
+          contactoEmergenciaTelefono: data.contactoEmergenciaTelefono || null,
           alergias: data.alergias || null,
           obraSocialTexto: data.obraSocialTexto || null,
         },

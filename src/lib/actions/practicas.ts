@@ -67,3 +67,24 @@ export async function listarPracticas(soloActivas = false) {
     })
   );
 }
+
+export async function togglePracticaActivo(id: string, activo: boolean) {
+  const session = await requireSession();
+  if (!permisosDe(session.rol).gestionarConfiguracion) {
+    return { error: "No tenés permiso para hacer esto." };
+  }
+
+  await withTenantContext(session.tenantId, async (tx) => {
+    await tx.practica.update({ where: { id }, data: { activo } });
+    await audit(tx, {
+      tenantId: session.tenantId,
+      userId: session.userId,
+      accion: "UPDATE",
+      entidad: "Practica",
+      entidadId: id,
+      detalle: { activo },
+    });
+  });
+
+  revalidatePath("/configuracion/practicas");
+}

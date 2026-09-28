@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
-import { listarPracticas } from "@/lib/actions/practicas";
+import { listarPracticas, togglePracticaActivo } from "@/lib/actions/practicas";
 import { PracticaQuickForm } from "@/components/configuracion/practica-quick-form";
+import { ActivoToggle } from "@/components/configuracion/activo-toggle";
 
 const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
@@ -29,22 +30,26 @@ export default async function PracticasPage() {
               <th className="px-4 py-3 font-semibold">Nombre</th>
               <th className="px-4 py-3 font-semibold">Duración</th>
               <th className="px-4 py-3 font-semibold">Precio particular</th>
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
             {practicas.length === 0 && (
               <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
                   Todavía no hay prácticas cargadas.
                 </td>
               </tr>
             )}
             {practicas.map((p) => (
-              <tr key={p.id} className="border-b border-border last:border-0">
+              <tr key={p.id} className={`border-b border-border last:border-0 ${!p.activo ? "opacity-50" : ""}`}>
                 <td className="px-4 py-3 text-foreground">{p.nombre}</td>
                 <td className="px-4 py-3 text-muted-foreground">{p.duracionMin} min</td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {currency.format(Number(p.precioParticular))}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <ActivoToggle id={p.id} activo={p.activo} toggleAction={togglePracticaActivo} />
                 </td>
               </tr>
             ))}

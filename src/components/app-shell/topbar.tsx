@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Menu } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -62,6 +63,11 @@ export function Topbar({
               sideOffset={8}
               className="z-50 min-w-40 rounded-md border border-border bg-card p-1 shadow-[0_2px_12px_rgb(0_0_0_/_0.12)]"
             >
+              <DropdownMenu.Item asChild className="cursor-pointer rounded-md text-sm outline-none">
+                <Link href="/perfil" className="block px-3 py-2 text-foreground hover:bg-muted">
+                  Mi perfil
+                </Link>
+              </DropdownMenu.Item>
               <DropdownMenu.Item
                 onSelect={() => cerrarSesion()}
                 className="cursor-pointer rounded-md px-3 py-2 text-sm text-foreground outline-none hover:bg-muted"

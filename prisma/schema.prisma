@@ -158,15 +158,32 @@ model AuditLog {
 // Núcleo clínico (Fase 1: Pacientes + Turnos + Estudios + Facturación básica)
 // ---------------------------------------------------------------------------
 
+enum TipoDocumento {
+  DNI
+  PASAPORTE
+  OTRO
+}
+
+enum Sexo {
+  MASCULINO
+  FEMENINO
+  OTRO
+}
+
 model Paciente {
   id               String    @id @default(cuid())
   tenantId         String
+  tipoDocumento    TipoDocumento @default(DNI)
   dni              String
   nombre           String
   apellido         String
   fechaNacimiento  DateTime?
+  sexo             Sexo?
+  domicilio        String?
   telefono         String?
   email            String?
+  contactoEmergenciaNombre   String?
+  contactoEmergenciaTelefono String?
   alergias         String?
   // Campo libre para tenants sin el módulo OBRAS_SOCIALES activado.
   // Cuando el módulo esté activo, se usa el modelo Afiliacion (fase 3).

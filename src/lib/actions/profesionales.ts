@@ -72,3 +72,24 @@ export async function listarProfesionales(soloActivos = false) {
     })
   );
 }
+
+export async function toggleProfesionalActivo(id: string, activo: boolean) {
+  const session = await requireSession();
+  if (!permisosDe(session.rol).gestionarConfiguracion) {
+    return { error: "No tenés permiso para hacer esto." };
+  }
+
+  await withTenantContext(session.tenantId, async (tx) => {
+    await tx.profesional.update({ where: { id }, data: { activo } });
+    await audit(tx, {
+      tenantId: session.tenantId,
+      userId: session.userId,
+      accion: "UPDATE",
+      entidad: "Profesional",
+      entidadId: id,
+      detalle: { activo },
+    });
+  });
+
+  revalidatePath("/configuracion/profesionales");
+}

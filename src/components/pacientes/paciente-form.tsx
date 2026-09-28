@@ -79,8 +79,24 @@ export function PacienteForm({ mode, paciente, readOnly }: PacienteFormProps) {
       <fieldset disabled={readOnly} className="contents">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
+          <label htmlFor="tipoDocumento" className={labelClass}>
+            Tipo de documento
+          </label>
+          <select
+            id="tipoDocumento"
+            name="tipoDocumento"
+            defaultValue={paciente?.tipoDocumento ?? "DNI"}
+            className={inputClass}
+          >
+            <option value="DNI">DNI</option>
+            <option value="PASAPORTE">Pasaporte</option>
+            <option value="OTRO">Otro</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
           <label htmlFor="dni" className={labelClass}>
-            DNI *
+            Número de documento *
           </label>
           <input
             id="dni"
@@ -91,19 +107,6 @@ export function PacienteForm({ mode, paciente, readOnly }: PacienteFormProps) {
             className={inputClass}
           />
           {fieldError("dni") && <p className="text-xs text-destructive">{fieldError("dni")}</p>}
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="fechaNacimiento" className={labelClass}>
-            Fecha de nacimiento
-          </label>
-          <input
-            id="fechaNacimiento"
-            name="fechaNacimiento"
-            type="date"
-            defaultValue={toDateInputValue(paciente?.fechaNacimiento)}
-            className={inputClass}
-          />
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -129,6 +132,31 @@ export function PacienteForm({ mode, paciente, readOnly }: PacienteFormProps) {
         </div>
 
         <div className="flex flex-col gap-1.5">
+          <label htmlFor="fechaNacimiento" className={labelClass}>
+            Fecha de nacimiento
+          </label>
+          <input
+            id="fechaNacimiento"
+            name="fechaNacimiento"
+            type="date"
+            defaultValue={toDateInputValue(paciente?.fechaNacimiento)}
+            className={inputClass}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="sexo" className={labelClass}>
+            Sexo
+          </label>
+          <select id="sexo" name="sexo" defaultValue={paciente?.sexo ?? ""} className={inputClass}>
+            <option value="">Sin especificar</option>
+            <option value="MASCULINO">Masculino</option>
+            <option value="FEMENINO">Femenino</option>
+            <option value="OTRO">Otro</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
           <label htmlFor="telefono" className={labelClass}>
             Teléfono
           </label>
@@ -147,6 +175,43 @@ export function PacienteForm({ mode, paciente, readOnly }: PacienteFormProps) {
             className={inputClass}
           />
           {fieldError("email") && <p className="text-xs text-destructive">{fieldError("email")}</p>}
+        </div>
+
+        <div className="flex flex-col gap-1.5 sm:col-span-2">
+          <label htmlFor="domicilio" className={labelClass}>
+            Domicilio
+          </label>
+          <input
+            id="domicilio"
+            name="domicilio"
+            defaultValue={paciente?.domicilio ?? ""}
+            className={inputClass}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="contactoEmergenciaNombre" className={labelClass}>
+            Contacto de emergencia
+          </label>
+          <input
+            id="contactoEmergenciaNombre"
+            name="contactoEmergenciaNombre"
+            placeholder="Nombre"
+            defaultValue={paciente?.contactoEmergenciaNombre ?? ""}
+            className={inputClass}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="contactoEmergenciaTelefono" className={labelClass}>
+            Teléfono de emergencia
+          </label>
+          <input
+            id="contactoEmergenciaTelefono"
+            name="contactoEmergenciaTelefono"
+            defaultValue={paciente?.contactoEmergenciaTelefono ?? ""}
+            className={inputClass}
+          />
         </div>
 
         <div className="flex flex-col gap-1.5">

@@ -114,7 +114,7 @@ export async function listarFacturas(fechaDesdeISO?: string) {
   return withTenantContext(session.tenantId, (tx) =>
     tx.factura.findMany({
       where: {
-        estado: "PAGADA",
+        estado: { in: ["PAGADA", "ANULADA"] },
         ...(fechaDesdeISO ? { createdAt: { gte: new Date(`${fechaDesdeISO}T00:00:00`) } } : {}),
         ...(miProfesionalId ? { turno: { profesionalId: miProfesionalId } } : {}),
       },
@@ -127,4 +127,30 @@ export async function listarFacturas(fechaDesdeISO?: string) {
       take: 200,
     })
   );
+}
+
+export interface AnularFacturaState {
+  error?: string;
+}
+
+/** Revierte un cobro mal cargado. No borra el registro (queda como ANULADA, con rastro en auditoría). */
+export async function anularFactura(id: string): Promise<AnularFacturaState | void> {
+  const session = await requireSession();
+  if (!permisosDe(session.rol).gestionarFacturacion) {
+    return { error: "No tenés permiso para hacer esto." };
+  }
+
+  await withTenantContext(session.tenantId, async (tx) => {
+    await tx.factura.update({ where: { id }, data: { estado: "ANULADA" } });
+    await audit(tx, {
+      tenantId: session.tenantId,
+      userId: session.userId,
+      accion: "UPDATE",
+      entidad: "Factura",
+      entidadId: id,
+      detalle: { estado: "ANULADA" },
+    });
+  });
+
+  revalidatePath("/facturacion");
 }
