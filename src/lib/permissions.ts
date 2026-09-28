@@ -19,6 +19,17 @@ export interface Permisos {
   gestionarFacturacion: boolean;
   /** Ver los cobros de cualquier profesional. MEDICO ve solo los propios (para saber cuánto retirar). */
   verTodaFacturacion: boolean;
+  /** Ver el timeline clínico completo (notas, diagnósticos, indicaciones, recetas, órdenes). */
+  verHistoriaClinica: boolean;
+  /** Escribir una entrada nueva en la historia clínica. */
+  gestionarHistoriaClinica: boolean;
+  /**
+   * Ver/imprimir/compartir SOLO los documentos ya generados (receta, orden
+   * médica) — no el resto del historial clínico. Es lo que necesita
+   * secretaría cuando el paciente pide su receta impresa o por WhatsApp,
+   * sin darle acceso a notas o diagnósticos privados.
+   */
+  verDocumentosPaciente: boolean;
 }
 
 const SIN_PERMISOS: Permisos = {
@@ -31,6 +42,9 @@ const SIN_PERMISOS: Permisos = {
   informarEstudios: false,
   gestionarFacturacion: false,
   verTodaFacturacion: false,
+  verHistoriaClinica: false,
+  gestionarHistoriaClinica: false,
+  verDocumentosPaciente: false,
 };
 
 const MATRIZ: Record<Rol, Permisos> = {
@@ -44,6 +58,9 @@ const MATRIZ: Record<Rol, Permisos> = {
     informarEstudios: true,
     gestionarFacturacion: true,
     verTodaFacturacion: true,
+    verHistoriaClinica: true,
+    gestionarHistoriaClinica: true,
+    verDocumentosPaciente: true,
   },
   SECRETARIA: {
     gestionarPacientes: true,
@@ -55,6 +72,9 @@ const MATRIZ: Record<Rol, Permisos> = {
     informarEstudios: false,
     gestionarFacturacion: true,
     verTodaFacturacion: true,
+    verHistoriaClinica: false,
+    gestionarHistoriaClinica: false,
+    verDocumentosPaciente: true,
   },
   MEDICO: {
     gestionarPacientes: true,
@@ -66,6 +86,9 @@ const MATRIZ: Record<Rol, Permisos> = {
     informarEstudios: true,
     gestionarFacturacion: false,
     verTodaFacturacion: false,
+    verHistoriaClinica: true,
+    gestionarHistoriaClinica: true,
+    verDocumentosPaciente: true,
   },
   AUDITOR: {
     gestionarPacientes: false,
@@ -77,6 +100,9 @@ const MATRIZ: Record<Rol, Permisos> = {
     informarEstudios: false,
     gestionarFacturacion: false,
     verTodaFacturacion: true,
+    verHistoriaClinica: true,
+    gestionarHistoriaClinica: false,
+    verDocumentosPaciente: true,
   },
 };
 

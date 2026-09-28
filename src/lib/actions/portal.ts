@@ -94,6 +94,18 @@ export async function obtenerMiEstudio(id: string) {
   });
 }
 
+/** Solo lo que el médico marcó visibleEnPortal — no el historial clínico completo. */
+export async function listarMiHistoriaClinicaVisible() {
+  const sesion = await requireSesionPortal();
+  return withTenantContext(sesion.tenantId, (tx) =>
+    tx.historiaClinicaEntry.findMany({
+      where: { pacienteId: sesion.pacienteId, visibleEnPortal: true },
+      include: { profesional: true },
+      orderBy: { fecha: "desc" },
+    })
+  );
+}
+
 export async function obtenerUrlDescargaArchivoPortal(archivoId: string) {
   const sesion = await requireSesionPortal();
 

@@ -19,6 +19,7 @@ const ENTIDAD_LABEL: Record<string, string> = {
   Membership: "un usuario",
   Estudio: "un estudio",
   Consultorio: "un consultorio",
+  HistoriaClinicaEntry: "una entrada de historia clínica",
 };
 
 export default async function AuditoriaPage() {

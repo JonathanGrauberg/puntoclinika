@@ -179,6 +179,18 @@ export async function listarEstudios(query?: string) {
   );
 }
 
+/** Para el panel de consulta del médico — estudios de un paciente puntual. */
+export async function listarEstudiosDePaciente(pacienteId: string) {
+  const session = await requireSession();
+  return withTenantContext(session.tenantId, (tx) =>
+    tx.estudio.findMany({
+      where: { pacienteId },
+      include: { practica: true, archivos: { select: { id: true } } },
+      orderBy: { createdAt: "desc" },
+    })
+  );
+}
+
 export async function obtenerEstudio(id: string) {
   const session = await requireSession();
 

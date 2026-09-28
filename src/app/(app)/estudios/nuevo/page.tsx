@@ -6,11 +6,16 @@ import { listarPacientes } from "@/lib/actions/pacientes";
 import { listarPracticas } from "@/lib/actions/practicas";
 import { EstudioUploadForm } from "@/components/estudios/estudio-upload-form";
 
-export default async function NuevoEstudioPage() {
+export default async function NuevoEstudioPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ pacienteId?: string }>;
+}) {
   const session = await requireSessionWithModules();
   if (!permisosDe(session.rol).gestionarEstudios) {
     redirect("/estudios");
   }
+  const { pacienteId } = await searchParams;
 
   const [pacientes, practicas] = await Promise.all([listarPacientes(), listarPracticas(true)]);
 
@@ -21,6 +26,7 @@ export default async function NuevoEstudioPage() {
         <EstudioUploadForm
           pacientes={pacientes}
           practicas={practicas.map((p) => ({ id: p.id, nombre: p.nombre }))}
+          pacienteIdInicial={pacienteId}
         />
       </div>
     </>

@@ -30,13 +30,15 @@ async function subirArchivo(archivo: File) {
 export function EstudioUploadForm({
   pacientes,
   practicas,
+  pacienteIdInicial,
 }: {
   pacientes: PacienteOption[];
   practicas: PracticaOption[];
+  pacienteIdInicial?: string;
 }) {
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<EstudioFormState>({});
-  const [pacienteId, setPacienteId] = useState("");
+  const [pacienteId, setPacienteId] = useState(pacienteIdInicial ?? "");
   const [archivos, setArchivos] = useState<File[]>([]);
   const [archivoInforme, setArchivoInforme] = useState<File | null>(null);
   const [subiendo, setSubiendo] = useState<"idle" | "subiendo" | "creando">("idle");

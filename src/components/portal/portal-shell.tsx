@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { href: "/portal/turnos", label: "Mis turnos" },
   { href: "/portal/estudios", label: "Mis estudios" },
+  { href: "/portal/historia-clinica", label: "Mi historia clínica" },
 ];
 
 export function PortalShell({

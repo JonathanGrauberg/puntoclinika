@@ -29,18 +29,19 @@ model Tenant {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  memberships Membership[]
-  modulos     TenantModule[]
-  pacientes   Paciente[]
-  profesionales Profesional[]
-  practicas   Practica[]
-  consultorios Consultorio[]
-  turnos      Turno[]
-  estudios    Estudio[]
-  estudioArchivos EstudioArchivo[]
-  facturas    Factura[]
-  auditLogs   AuditLog[]
-  pacientePortales PacientePortal[]
+  memberships           Membership[]
+  modulos               TenantModule[]
+  pacientes             Paciente[]
+  profesionales         Profesional[]
+  practicas             Practica[]
+  consultorios          Consultorio[]
+  turnos                Turno[]
+  estudios              Estudio[]
+  estudioArchivos       EstudioArchivo[]
+  facturas              Factura[]
+  auditLogs             AuditLog[]
+  pacientePortales      PacientePortal[]
+  documentosCompartidos DocumentoCompartido[]
 }
 
 model User {
@@ -51,8 +52,8 @@ model User {
   activo       Boolean  @default(true)
   createdAt    DateTime @default(now())
 
-  memberships   Membership[]
-  profesional   Profesional?
+  memberships         Membership[]
+  profesional         Profesional?
   passwordResetTokens PasswordResetToken[]
 }
 
@@ -85,12 +86,12 @@ enum RolTenant {
 // Une un User a un Tenant con un rol. Permite que un profesional
 // atienda en más de un centro con el mismo login (selector post-login).
 model Membership {
-  id       String    @id @default(cuid())
-  userId   String
-  tenantId String
-  rol      RolTenant
-  activo   Boolean   @default(true)
-  createdAt DateTime @default(now())
+  id        String    @id @default(cuid())
+  userId    String
+  tenantId  String
+  rol       RolTenant
+  activo    Boolean   @default(true)
+  createdAt DateTime  @default(now())
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -113,12 +114,12 @@ enum ModuloKey {
 }
 
 model TenantModule {
-  id             String     @id @default(cuid())
+  id             String    @id @default(cuid())
   tenantId       String
   modulo         ModuloKey
-  habilitado     Boolean    @default(false)
+  habilitado     Boolean   @default(false)
   activadoEn     DateTime?
-  precioOverride Decimal?   @db.Decimal(10, 2)
+  precioOverride Decimal?  @db.Decimal(10, 2)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -171,27 +172,27 @@ enum Sexo {
 }
 
 model Paciente {
-  id               String    @id @default(cuid())
-  tenantId         String
-  tipoDocumento    TipoDocumento @default(DNI)
-  dni              String
-  nombre           String
-  apellido         String
-  fechaNacimiento  DateTime?
-  sexo             Sexo?
-  domicilio        String?
-  telefono         String?
-  email            String?
+  id                         String        @id @default(cuid())
+  tenantId                   String
+  tipoDocumento              TipoDocumento @default(DNI)
+  dni                        String
+  nombre                     String
+  apellido                   String
+  fechaNacimiento            DateTime?
+  sexo                       Sexo?
+  domicilio                  String?
+  telefono                   String?
+  email                      String?
   contactoEmergenciaNombre   String?
   contactoEmergenciaTelefono String?
-  alergias         String?
+  alergias                   String?
   // Campo libre para tenants sin el módulo OBRAS_SOCIALES activado.
   // Cuando el módulo esté activo, se usa el modelo Afiliacion (fase 3).
-  obraSocialTexto  String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  obraSocialTexto            String?
+  createdAt                  DateTime      @default(now())
+  updatedAt                  DateTime      @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant   Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   turnos   Turno[]
   estudios Estudio[]
   facturas Factura[]
@@ -225,20 +226,20 @@ model PacientePortal {
 }
 
 model Profesional {
-  id          String  @id @default(cuid())
-  tenantId    String
-  userId      String? @unique
-  nombre      String
-  apellido    String
-  matricula   String?
+  id           String  @id @default(cuid())
+  tenantId     String
+  userId       String? @unique
+  nombre       String
+  apellido     String
+  matricula    String?
   especialidad String?
-  activo      Boolean @default(true)
+  activo       Boolean @default(true)
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  user   User?  @relation(fields: [userId], references: [id])
-  turnos   Turno[]
-  estudiosInformados Estudio[] @relation("EstudioInformadoPor")
-  historia HistoriaClinicaEntry[]
+  tenant             Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user               User?                  @relation(fields: [userId], references: [id])
+  turnos             Turno[]
+  estudiosInformados Estudio[]              @relation("EstudioInformadoPor")
+  historia           HistoriaClinicaEntry[]
 
   @@index([tenantId])
 }
@@ -246,19 +247,19 @@ model Profesional {
 // La unidad configurable multiespecialidad: cada centro carga su propio
 // catálogo de prácticas sobre la misma base de pacientes/turnos/facturación.
 model Practica {
-  id                    String  @id @default(cuid())
-  tenantId              String
-  nombre                String
-  especialidadKey       String? // libre por ahora; catálogo formal en fase 5 (Odontograma)
-  duracionMin           Int     @default(30)
-  precioParticular      Decimal @db.Decimal(10, 2)
-  requiereEstudio       Boolean @default(false)
+  id                     String  @id @default(cuid())
+  tenantId               String
+  nombre                 String
+  especialidadKey        String? // libre por ahora; catálogo formal en fase 5 (Odontograma)
+  duracionMin            Int     @default(30)
+  precioParticular       Decimal @db.Decimal(10, 2)
+  requiereEstudio        Boolean @default(false)
   requiereAutorizacionOS Boolean @default(false)
-  activo                Boolean @default(true)
+  activo                 Boolean @default(true)
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  turnos   Turno[]
-  estudios Estudio[]
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  turnos       Turno[]
+  estudios     Estudio[]
   facturaItems FacturaItem[]
 
   @@index([tenantId])
@@ -322,32 +323,32 @@ enum EstadoEstudio {
 }
 
 model Estudio {
-  id               String        @id @default(cuid())
-  tenantId         String
-  turnoId          String?
-  pacienteId       String
-  practicaId       String
+  id                String        @id @default(cuid())
+  tenantId          String
+  turnoId           String?
+  pacienteId        String
+  practicaId        String
   // Adjunto opcional: un PDF de informe externo (ej: ya viene firmado de
   // otro sistema o dictado). Independiente de informeTexto, que es lo que
   // el médico escribe y firma acá mismo — pueden coexistir los dos.
   informeArchivoUrl String?
-  modalidad        String?
-  estado           EstadoEstudio @default(PENDIENTE)
-  informadoPorId   String?
-  informadoEn      DateTime?
-  informeTexto     String?
-  createdAt        DateTime      @default(now())
+  modalidad         String?
+  estado            EstadoEstudio @default(PENDIENTE)
+  informadoPorId    String?
+  informadoEn       DateTime?
+  informeTexto      String?
+  createdAt         DateTime      @default(now())
 
-  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  turno       Turno?       @relation(fields: [turnoId], references: [id])
-  paciente    Paciente     @relation(fields: [pacienteId], references: [id])
-  practica    Practica     @relation(fields: [practicaId], references: [id])
-  informadoPor Profesional? @relation("EstudioInformadoPor", fields: [informadoPorId], references: [id])
+  tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  turno        Turno?           @relation(fields: [turnoId], references: [id])
+  paciente     Paciente         @relation(fields: [pacienteId], references: [id])
+  practica     Practica         @relation(fields: [practicaId], references: [id])
+  informadoPor Profesional?     @relation("EstudioInformadoPor", fields: [informadoPorId], references: [id])
   // Una radiografía/ecografía suele traer varias imágenes, no una sola —
   // por eso es una relación 1-a-muchos y no un campo archivoUrl suelto
   // (que es lo que había antes). Permite subir varias juntas o ir
   // agregando después sin tocar el estudio en sí.
-  archivos    EstudioArchivo[]
+  archivos     EstudioArchivo[]
 
   @@index([tenantId, pacienteId])
   @@index([tenantId, estado])
@@ -369,19 +370,48 @@ model EstudioArchivo {
 
 // Timeline clínico único del paciente. Recetas/Informes (fase 6) y
 // Odontograma (fase 5) cuelgan acá como "tipo" de entrada, no como tablas aparte.
-model HistoriaClinicaEntry {
-  id            String   @id @default(cuid())
-  tenantId      String
-  pacienteId    String
-  profesionalId String
-  tipo          String // "consulta" | "diagnostico" | "indicacion" | ...
-  contenido     String
-  fecha         DateTime @default(now())
+enum TipoHistoriaClinica {
+  NOTA
+  DIAGNOSTICO
+  INDICACION
+  RECETA
+  ORDEN_MEDICA
+}
 
-  paciente    Paciente    @relation(fields: [pacienteId], references: [id])
-  profesional Profesional @relation(fields: [profesionalId], references: [id])
+model HistoriaClinicaEntry {
+  id              String              @id @default(cuid())
+  tenantId        String
+  pacienteId      String
+  profesionalId   String
+  tipo            TipoHistoriaClinica
+  contenido       String
+  // El médico decide, entrada por entrada, si el paciente la ve en su
+  // Portal — no es un interruptor general del paciente (fase 2, portal).
+  visibleEnPortal Boolean             @default(false)
+  fecha           DateTime            @default(now())
+
+  paciente    Paciente             @relation(fields: [pacienteId], references: [id])
+  profesional Profesional          @relation(fields: [profesionalId], references: [id])
+  compartido  DocumentoCompartido?
 
   @@index([tenantId, pacienteId, fecha])
+}
+
+// Puente público para el link compartible (/documento/[token]) de una
+// Receta u Orden médica — mismo motivo que PacientePortal: la pantalla es
+// pública (el paciente la abre sin login) y necesita resolver el tenant
+// ANTES de tener contexto de tenant seteado, así que esta tabla queda
+// deliberadamente SIN policy de RLS. No guarda ningún dato clínico, solo
+// el puntero; el contenido real se lee después vía withTenantContext.
+model DocumentoCompartido {
+  id                     String   @id @default(cuid())
+  tenantId               String
+  historiaClinicaEntryId String   @unique
+  token                  String   @unique
+  createdAt              DateTime @default(now())
+
+  tenant  Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  entrada HistoriaClinicaEntry @relation(fields: [historiaClinicaEntryId], references: [id], onDelete: Cascade)
 }
 
 // ---------------------------------------------------------------------------
@@ -395,13 +425,13 @@ enum EstadoFactura {
 }
 
 model Factura {
-  id          String        @id @default(cuid())
-  tenantId    String
-  pacienteId  String
-  turnoId     String?
-  montoTotal  Decimal       @db.Decimal(10, 2)
-  estado      EstadoFactura @default(PENDIENTE)
-  createdAt   DateTime      @default(now())
+  id         String        @id @default(cuid())
+  tenantId   String
+  pacienteId String
+  turnoId    String?
+  montoTotal Decimal       @db.Decimal(10, 2)
+  estado     EstadoFactura @default(PENDIENTE)
+  createdAt  DateTime      @default(now())
 
   tenant   Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   paciente Paciente      @relation(fields: [pacienteId], references: [id])
