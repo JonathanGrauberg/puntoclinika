@@ -15,6 +15,7 @@ const turnoSchema = z.object({
   fecha: z.string().min(1, "Falta la fecha"),
   hora: z.string().min(1, "Falta la hora"),
   notas: z.string().trim().max(500).optional(),
+  numeroAutorizacionOS: z.string().trim().max(50).optional(),
 });
 
 export interface TurnoFormState {
@@ -104,6 +105,7 @@ export async function crearTurno(formData: FormData): Promise<TurnoFormState | v
           profesionalId: data.profesionalId,
           practicaId: data.practicaId,
           consultorioId: data.consultorioId || null,
+          numeroAutorizacionOS: data.numeroAutorizacionOS || null,
           fechaHora,
           duracionMin: practica.duracionMin,
           notas: data.notas || null,
@@ -170,6 +172,7 @@ export async function actualizarTurno(id: string, formData: FormData): Promise<T
           profesionalId: data.profesionalId,
           practicaId: data.practicaId,
           consultorioId: data.consultorioId || null,
+          numeroAutorizacionOS: data.numeroAutorizacionOS || null,
           fechaHora,
           duracionMin: practica.duracionMin,
           notas: data.notas || null,

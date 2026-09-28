@@ -42,6 +42,8 @@ model Tenant {
   auditLogs             AuditLog[]
   pacientePortales      PacientePortal[]
   documentosCompartidos DocumentoCompartido[]
+  obrasSociales         ObraSocial[]
+  afiliaciones          Afiliacion[]
 }
 
 model User {
@@ -192,15 +194,50 @@ model Paciente {
   createdAt                  DateTime      @default(now())
   updatedAt                  DateTime      @updatedAt
 
-  tenant   Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  turnos   Turno[]
-  estudios Estudio[]
-  facturas Factura[]
-  historia HistoriaClinicaEntry[]
-  portal   PacientePortal?
+  tenant       Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  turnos       Turno[]
+  estudios     Estudio[]
+  facturas     Factura[]
+  historia     HistoriaClinicaEntry[]
+  portal       PacientePortal?
+  afiliaciones Afiliacion[]
 
   @@unique([tenantId, dni])
   @@index([tenantId])
+}
+
+// Catálogo de obras sociales que atiende el centro (fase 3). Solo tiene
+// sentido si el módulo OBRAS_SOCIALES está habilitado — si no, el paciente
+// sigue usando el campo libre Paciente.obraSocialTexto.
+model ObraSocial {
+  id       String  @id @default(cuid())
+  tenantId String
+  nombre   String
+  activo   Boolean @default(true)
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  afiliaciones Afiliacion[]
+
+  @@index([tenantId])
+}
+
+// Un paciente puede tener más de una (ej: obra social + prepaga
+// complementaria), por eso es una relación aparte y no un campo suelto.
+model Afiliacion {
+  id             String   @id @default(cuid())
+  tenantId       String
+  pacienteId     String
+  obraSocialId   String
+  numeroAfiliado String
+  plan           String?
+  activo         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  tenant     Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  paciente   Paciente   @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  obraSocial ObraSocial @relation(fields: [obraSocialId], references: [id])
+
+  @@index([tenantId, pacienteId])
 }
 
 // Login del Portal del Paciente. Deliberadamente SIN policy de RLS —
@@ -292,18 +329,23 @@ enum EstadoTurno {
 }
 
 model Turno {
-  id            String      @id @default(cuid())
-  tenantId      String
-  pacienteId    String
-  profesionalId String
-  practicaId    String
-  consultorioId String?
-  fechaHora     DateTime
-  duracionMin   Int
-  estado        EstadoTurno @default(RESERVADO)
-  origen        String? // "secretaria" | "kiosco" | "portal"
-  notas         String?
-  createdAt     DateTime    @default(now())
+  id                   String      @id @default(cuid())
+  tenantId             String
+  pacienteId           String
+  profesionalId        String
+  practicaId           String
+  consultorioId        String?
+  fechaHora            DateTime
+  duracionMin          Int
+  estado               EstadoTurno @default(RESERVADO)
+  origen               String? // "secretaria" | "kiosco" | "portal"
+  notas                String?
+  // Número que da la obra social al autorizar (por teléfono, web, etc.) —
+  // solo aplica si Practica.requiereAutorizacionOS. Sin workflow de estados
+  // propio: si la práctica lo requiere y esto está vacío, se considera
+  // pendiente (ver badge en la agenda).
+  numeroAutorizacionOS String?
+  createdAt            DateTime    @default(now())
 
   tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   paciente    Paciente     @relation(fields: [pacienteId], references: [id])

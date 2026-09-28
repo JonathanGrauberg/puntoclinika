@@ -24,8 +24,9 @@ interface TurnoConDatos {
   duracionMin: number;
   estado: string;
   notas: string | null;
+  numeroAutorizacionOS: string | null;
   paciente: { nombre: string; apellido: string };
-  practica: { nombre: string };
+  practica: { nombre: string; requiereAutorizacionOS: boolean };
 }
 
 export function TurnosAgenda({
@@ -75,6 +76,7 @@ export function TurnosAgenda({
       consultorioId: turno.consultorioId,
       fechaHora: turno.fechaHora,
       notas: turno.notas,
+      numeroAutorizacionOS: turno.numeroAutorizacionOS,
     });
     setModalSlot(null);
     setModalKey((k) => k + 1);
@@ -172,6 +174,7 @@ export function TurnosAgenda({
                   top: offsetPx(fecha),
                   height: Math.max((t.duracionMin / SLOT_MIN) * SLOT_HEIGHT - 2, SLOT_HEIGHT - 2),
                 };
+                const pendienteAutorizacion = t.practica.requiereAutorizacionOS && !t.numeroAutorizacionOS;
                 const contenido = (
                   <>
                     <p className="flex items-center gap-1 truncate text-xs font-semibold">
@@ -179,6 +182,12 @@ export function TurnosAgenda({
                         <span
                           className="h-1.5 w-1.5 shrink-0 rounded-full bg-success"
                           title="Llegó — en sala de espera"
+                        />
+                      )}
+                      {pendienteAutorizacion && (
+                        <span
+                          className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive"
+                          title="Pendiente de autorización de la obra social"
                         />
                       )}
                       {t.paciente.apellido}, {t.paciente.nombre}

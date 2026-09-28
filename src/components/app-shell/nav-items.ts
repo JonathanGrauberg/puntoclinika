@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { CalendarDays, FileImage, LayoutDashboard, Receipt, ShieldCheck, Settings, Users } from "lucide-react";
+import { CalendarDays, FileImage, HeartPulse, LayoutDashboard, Receipt, ShieldCheck, Settings, Users } from "lucide-react";
 import type { ModuloKey } from "@prisma/client";
 import type { Permisos } from "@/lib/permissions";
 
@@ -17,6 +17,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/turnos", label: "Turnos", icon: CalendarDays, modulo: "TURNOS" },
   { href: "/estudios", label: "Estudios", icon: FileImage, modulo: "ESTUDIOS" },
   { href: "/facturacion", label: "Facturación", icon: Receipt, modulo: "FACTURACION" },
+  { href: "/obras-sociales", label: "Obras Sociales", icon: HeartPulse, modulo: "OBRAS_SOCIALES" },
 ];
 
 export const NAV_ITEMS_SECONDARY: NavItem[] = [

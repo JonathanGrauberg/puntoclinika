@@ -100,11 +100,17 @@ export default async function TurnosPage({
           duracionMin: t.duracionMin,
           estado: t.estado,
           notas: t.notas,
+          numeroAutorizacionOS: t.numeroAutorizacionOS,
           paciente: { nombre: t.paciente.nombre, apellido: t.paciente.apellido },
-          practica: { nombre: t.practica.nombre },
+          practica: { nombre: t.practica.nombre, requiereAutorizacionOS: t.practica.requiereAutorizacionOS },
         }))}
         pacientes={pacientes}
-        practicas={practicas.map((p) => ({ id: p.id, nombre: p.nombre, duracionMin: p.duracionMin }))}
+        practicas={practicas.map((p) => ({
+          id: p.id,
+          nombre: p.nombre,
+          duracionMin: p.duracionMin,
+          requiereAutorizacionOS: p.requiereAutorizacionOS,
+        }))}
         consultorios={consultorios.map((c) => ({ id: c.id, nombre: c.nombre }))}
         puedeGestionar={permisos.gestionarTurnos}
       />

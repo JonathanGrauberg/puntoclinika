@@ -12,6 +12,7 @@ export interface PracticaOption {
   id: string;
   nombre: string;
   duracionMin: number;
+  requiereAutorizacionOS: boolean;
 }
 
 export interface ConsultorioOption {
@@ -27,6 +28,7 @@ export interface TurnoExistente {
   consultorioId: string | null;
   fechaHora: Date;
   notas: string | null;
+  numeroAutorizacionOS: string | null;
 }
 
 const inputClass =
@@ -59,7 +61,10 @@ export function TurnoModal({
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<TurnoFormState>({});
   const [pacienteId, setPacienteId] = useState(turno?.pacienteId ?? "");
+  const [practicaId, setPracticaId] = useState(turno?.practicaId ?? "");
   const [confirmandoCancelar, setConfirmandoCancelar] = useState(false);
+
+  const practicaSeleccionada = practicas.find((p) => p.id === practicaId);
 
   const fechaDefault = toISODate(turno?.fechaHora ?? slot?.fecha ?? new Date());
   const horaDefault = turno ? toTimeValue(turno.fechaHora) : slot?.hora ?? "08:00";
@@ -121,7 +126,8 @@ export function TurnoModal({
                 id="practicaId"
                 name="practicaId"
                 required
-                defaultValue={turno?.practicaId ?? ""}
+                value={practicaId}
+                onChange={(e) => setPracticaId(e.target.value)}
                 className={inputClass}
               >
                 <option value="" disabled>
@@ -134,6 +140,21 @@ export function TurnoModal({
                 ))}
               </select>
             </div>
+
+            {practicaSeleccionada?.requiereAutorizacionOS && (
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="numeroAutorizacionOS" className={labelClass}>
+                  N.º de autorización (obra social)
+                </label>
+                <input
+                  id="numeroAutorizacionOS"
+                  name="numeroAutorizacionOS"
+                  placeholder="Pendiente si se deja vacío"
+                  defaultValue={turno?.numeroAutorizacionOS ?? ""}
+                  className={inputClass}
+                />
+              </div>
+            )}
 
             {consultorios.length > 0 && (
               <div className="flex flex-col gap-1.5">

@@ -9,15 +9,20 @@ import { permisosDe } from "@/lib/permissions";
 import { obtenerPaciente, obtenerAccesoPortal } from "@/lib/actions/pacientes";
 import { listarDocumentosPaciente } from "@/lib/actions/historia-clinica";
 import { DocumentosPaciente } from "@/components/historia-clinica/documentos-paciente";
+import { listarAfiliacionesDePaciente, listarObrasSociales } from "@/lib/actions/obras-sociales";
+import { AfiliacionesPaciente } from "@/components/pacientes/afiliaciones-paciente";
 
 export default async function EditarPacientePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireSessionWithModules();
   const permisos = permisosDe(session.rol);
+  const moduloObrasSociales = session.enabledModules.includes("OBRAS_SOCIALES");
   const { id } = await params;
-  const [paciente, acceso, documentos] = await Promise.all([
+  const [paciente, acceso, documentos, afiliaciones, obrasSociales] = await Promise.all([
     obtenerPaciente(id),
     obtenerAccesoPortal(id),
     permisos.verDocumentosPaciente ? listarDocumentosPaciente(id) : Promise.resolve([]),
+    moduloObrasSociales ? listarAfiliacionesDePaciente(id) : Promise.resolve([]),
+    moduloObrasSociales ? listarObrasSociales(true) : Promise.resolve([]),
   ]);
 
   if (!paciente) notFound();
@@ -47,6 +52,18 @@ export default async function EditarPacientePage({ params }: { params: Promise<{
         <div className="rounded-md border border-border bg-card p-6">
           <PacienteForm mode="edit" paciente={paciente} readOnly={!permisos.gestionarPacientes} />
         </div>
+
+        {moduloObrasSociales && (
+          <div className="rounded-md border border-border bg-card p-6">
+            <h2 className="mb-3 text-sm font-semibold text-foreground">Obras sociales</h2>
+            <AfiliacionesPaciente
+              pacienteId={paciente.id}
+              afiliaciones={afiliaciones}
+              obrasSociales={obrasSociales}
+              readOnly={!permisos.gestionarPacientes}
+            />
+          </div>
+        )}
 
         {permisos.gestionarPacientes && (
           <div className="rounded-md border border-border bg-card p-6">
