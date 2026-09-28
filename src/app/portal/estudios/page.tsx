@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { obtenerMiPaciente, listarMisEstudiosInformados } from "@/lib/actions/portal";
+import { formatFechaArgentina } from "@/lib/date-utils";
 
 export default async function PortalEstudiosPage() {
   const [paciente, estudios] = await Promise.all([obtenerMiPaciente(), listarMisEstudiosInformados()]);
@@ -25,7 +26,7 @@ export default async function PortalEstudiosPage() {
                 <p className="text-sm text-muted-foreground">{e.modalidad || "—"}</p>
               </div>
               <p className="text-sm text-muted-foreground">
-                {e.informadoEn ? new Date(e.informadoEn).toLocaleDateString("es-AR") : "—"}
+                {e.informadoEn ? formatFechaArgentina(new Date(e.informadoEn)) : "—"}
               </p>
             </Link>
           ))}

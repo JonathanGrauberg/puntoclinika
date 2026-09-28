@@ -9,7 +9,7 @@ import { listarConsultorios } from "@/lib/actions/consultorios";
 import { listarTurnosSemana } from "@/lib/actions/turnos";
 import { ProfesionalSelector } from "@/components/turnos/profesional-selector";
 import { TurnosAgenda } from "@/components/turnos/turnos-agenda";
-import { getMonday, toISODate } from "@/lib/date-utils";
+import { getMonday, toISODate, inicioDiaArgentina, hoyArgentina } from "@/lib/date-utils";
 
 export default async function TurnosPage({
   searchParams,
@@ -71,7 +71,7 @@ export default async function TurnosPage({
     profesionalId = miId;
   }
 
-  const weekStart = weekParam ? new Date(`${weekParam}T00:00:00`) : getMonday(new Date());
+  const weekStart = weekParam ? inicioDiaArgentina(weekParam) : getMonday(hoyArgentina());
   const weekStartISO = toISODate(weekStart);
 
   const [turnos, pacientes, consultorios] = await Promise.all([

@@ -6,7 +6,7 @@ import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { listarTurnosParaCobrar } from "@/lib/actions/facturacion";
 import { TurnosParaCobrar } from "@/components/facturacion/turnos-para-cobrar";
-import { addDays, toISODate } from "@/lib/date-utils";
+import { addDays, toISODate, inicioDiaArgentina, hoyArgentina, formatFechaArgentina } from "@/lib/date-utils";
 
 export default async function NuevoCobroPage({
   searchParams,
@@ -19,7 +19,7 @@ export default async function NuevoCobroPage({
   }
 
   const { fecha: fechaParam } = await searchParams;
-  const fecha = fechaParam ? new Date(`${fechaParam}T00:00:00`) : new Date();
+  const fecha = fechaParam ? inicioDiaArgentina(fechaParam) : hoyArgentina();
   const fechaISO = toISODate(fecha);
 
   const turnos = await listarTurnosParaCobrar(fechaISO);
@@ -43,7 +43,7 @@ export default async function NuevoCobroPage({
           <ChevronRight className="h-4 w-4" />
         </Link>
         <span className="ml-2 text-sm font-semibold text-foreground">
-          {fecha.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" })}
+          {formatFechaArgentina(fecha, { weekday: "long", day: "numeric", month: "long" })}
         </span>
       </div>
 

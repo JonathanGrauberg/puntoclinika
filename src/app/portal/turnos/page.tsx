@@ -1,5 +1,6 @@
 import { PortalShell } from "@/components/portal/portal-shell";
 import { obtenerMiPaciente, listarMisTurnos } from "@/lib/actions/portal";
+import { formatFechaHoraArgentina, formatFechaArgentina } from "@/lib/date-utils";
 
 const ESTADO_LABEL: Record<string, string> = {
   RESERVADO: "Reservado",
@@ -39,7 +40,7 @@ export default async function PortalTurnosPage() {
                     Dr/a. {t.profesional.apellido}, {t.profesional.nombre}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(t.fechaHora).toLocaleString("es-AR", {
+                    {formatFechaHoraArgentina(new Date(t.fechaHora), {
                       weekday: "long",
                       day: "numeric",
                       month: "long",
@@ -68,7 +69,7 @@ export default async function PortalTurnosPage() {
                     Dr/a. {t.profesional.apellido}, {t.profesional.nombre}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(t.fechaHora).toLocaleDateString("es-AR", {
+                    {formatFechaArgentina(new Date(t.fechaHora), {
                       day: "numeric",
                       month: "long",
                       year: "numeric",

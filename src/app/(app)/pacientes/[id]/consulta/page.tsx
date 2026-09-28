@@ -8,6 +8,7 @@ import { listarEstudiosDePaciente } from "@/lib/actions/estudios";
 import { listarHistoriaClinica } from "@/lib/actions/historia-clinica";
 import { NuevaEntradaForm } from "@/components/historia-clinica/nueva-entrada-form";
 import { HistoriaTimeline, type EntradaTimeline } from "@/components/historia-clinica/historia-timeline";
+import { formatFechaArgentina } from "@/lib/date-utils";
 
 export default async function ConsultaPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireSession();
@@ -51,7 +52,7 @@ export default async function ConsultaPage({ params }: { params: Promise<{ id: s
                 <div className="flex justify-between gap-2">
                   <dt className="text-muted-foreground">Nacimiento</dt>
                   <dd className="text-foreground">
-                    {new Date(paciente.fechaNacimiento).toLocaleDateString("es-AR")}
+                    {formatFechaArgentina(new Date(paciente.fechaNacimiento))}
                   </dd>
                 </div>
               )}
@@ -93,7 +94,7 @@ export default async function ConsultaPage({ params }: { params: Promise<{ id: s
                 {estudios.map((e) => (
                   <li key={e.id}>
                     <Link href={`/estudios/${e.id}`} className="block text-sm text-foreground hover:underline">
-                      {e.practica.nombre} — {new Date(e.createdAt).toLocaleDateString("es-AR")}{" "}
+                      {e.practica.nombre} — {formatFechaArgentina(new Date(e.createdAt))}{" "}
                       <span className="text-xs text-muted-foreground">
                         ({e.estado === "INFORMADO" ? "Informado" : "Pendiente"})
                       </span>

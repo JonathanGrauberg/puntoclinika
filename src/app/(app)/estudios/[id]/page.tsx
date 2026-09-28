@@ -6,6 +6,7 @@ import { obtenerEstudio } from "@/lib/actions/estudios";
 import { EstudioGallery, InformeAdjuntoViewer } from "@/components/estudios/estudio-viewer";
 import { AgregarArchivosForm } from "@/components/estudios/agregar-archivos-form";
 import { InformeForm } from "@/components/estudios/informe-form";
+import { formatFechaArgentina } from "@/lib/date-utils";
 
 export default async function EstudioDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireSessionWithModules();
@@ -49,7 +50,7 @@ export default async function EstudioDetallePage({ params }: { params: Promise<{
               </div>
               <div className="flex justify-between gap-2">
                 <dt className="text-muted-foreground">Fecha</dt>
-                <dd className="text-foreground">{new Date(estudio.createdAt).toLocaleDateString("es-AR")}</dd>
+                <dd className="text-foreground">{formatFechaArgentina(new Date(estudio.createdAt))}</dd>
               </div>
               <div className="flex justify-between gap-2">
                 <dt className="text-muted-foreground">Estado</dt>

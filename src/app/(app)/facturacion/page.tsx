@@ -6,6 +6,7 @@ import { permisosDe } from "@/lib/permissions";
 import { listarFacturas } from "@/lib/actions/facturacion";
 import { METODO_PAGO_LABEL } from "@/lib/metodos-pago";
 import { AnularFacturaButton } from "@/components/facturacion/anular-factura-button";
+import { formatFechaArgentina } from "@/lib/date-utils";
 
 const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
@@ -67,7 +68,7 @@ export default async function FacturacionPage() {
                 className={`border-b border-border last:border-0 ${f.estado === "ANULADA" ? "opacity-50" : ""}`}
               >
                 <td className="px-4 py-3 text-muted-foreground">
-                  {new Date(f.createdAt).toLocaleDateString("es-AR")}
+                  {formatFechaArgentina(new Date(f.createdAt))}
                 </td>
                 <td className="px-4 py-3 text-foreground">
                   {f.paciente.apellido}, {f.paciente.nombre}

@@ -4,6 +4,7 @@ import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { listarEstudios } from "@/lib/actions/estudios";
+import { formatFechaArgentina } from "@/lib/date-utils";
 
 const ESTADO_LABEL: Record<string, string> = {
   PENDIENTE: "Pendiente",
@@ -74,7 +75,7 @@ export default async function EstudiosPage({
                 <td className="px-4 py-3 text-muted-foreground">{e.practica.nombre}</td>
                 <td className="px-4 py-3 text-muted-foreground">{e.modalidad || "—"}</td>
                 <td className="px-4 py-3 text-muted-foreground">
-                  {new Date(e.createdAt).toLocaleDateString("es-AR")}
+                  {formatFechaArgentina(new Date(e.createdAt))}
                 </td>
                 <td className="px-4 py-3">
                   <span

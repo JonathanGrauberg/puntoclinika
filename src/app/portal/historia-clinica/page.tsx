@@ -1,6 +1,7 @@
 import { PortalShell } from "@/components/portal/portal-shell";
 import { obtenerMiPaciente } from "@/lib/actions/portal";
 import { listarMiHistoriaClinicaVisible } from "@/lib/actions/portal";
+import { formatFechaArgentina } from "@/lib/date-utils";
 
 const TIPO_LABEL: Record<string, string> = {
   NOTA: "Nota",
@@ -30,7 +31,7 @@ export default async function PortalHistoriaClinicaPage() {
                   {TIPO_LABEL[e.tipo] ?? e.tipo}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  {new Date(e.fecha).toLocaleDateString("es-AR")}
+                  {formatFechaArgentina(new Date(e.fecha))}
                 </span>
               </div>
               <p className="whitespace-pre-wrap text-sm text-foreground">{e.contenido}</p>

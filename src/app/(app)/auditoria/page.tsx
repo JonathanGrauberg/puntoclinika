@@ -3,6 +3,7 @@ import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { listarAuditoria } from "@/lib/actions/auditoria";
+import { formatFechaHoraArgentina } from "@/lib/date-utils";
 
 const ACCION_LABEL: Record<string, string> = {
   CREATE: "Creó",
@@ -54,7 +55,7 @@ export default async function AuditoriaPage() {
             {entradas.map((e) => (
               <tr key={e.id} className="border-b border-border last:border-0">
                 <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                  {new Date(e.createdAt).toLocaleString("es-AR", {
+                  {formatFechaHoraArgentina(new Date(e.createdAt), {
                     day: "2-digit",
                     month: "2-digit",
                     year: "numeric",

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { withTenantContext } from "@/lib/tenant-context";
 import { audit } from "@/lib/audit";
+import { hoyArgentina, addDays, ARG_TIME_ZONE } from "@/lib/date-utils";
 
 const dniSchema = z.string().trim().min(6, "DNI inválido").max(12, "DNI inválido");
 
@@ -41,10 +42,8 @@ export async function registrarLlegadaKiosco(
     return { error: MENSAJE_GENERICO };
   }
 
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const manana = new Date(hoy);
-  manana.setDate(manana.getDate() + 1);
+  const hoy = hoyArgentina();
+  const manana = addDays(hoy, 1);
 
   return withTenantContext(tenant.id, async (tx) => {
     const paciente = await tx.paciente.findUnique({ where: { tenantId_dni: { tenantId: tenant.id, dni } } });
@@ -80,7 +79,11 @@ export async function registrarLlegadaKiosco(
 
     return {
       ok: {
-        hora: turno.fechaHora.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }),
+        hora: turno.fechaHora.toLocaleTimeString("es-AR", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: ARG_TIME_ZONE,
+        }),
         profesional: `${turno.profesional.apellido}, ${turno.profesional.nombre}`,
         practica: turno.practica.nombre,
         consultorio: turno.consultorio ? turno.consultorio.nombre : null,

@@ -7,6 +7,7 @@ import { withTenantContext } from "@/lib/tenant-context";
 import { audit } from "@/lib/audit";
 import { permisosDe } from "@/lib/permissions";
 import { METODOS_PAGO } from "@/lib/metodos-pago";
+import { inicioDiaArgentina, addDays } from "@/lib/date-utils";
 
 export interface CobroFormState {
   error?: string;
@@ -85,9 +86,8 @@ export async function listarTurnosParaCobrar(fechaISO: string) {
   const session = await requireSession();
   if (!permisosDe(session.rol).gestionarFacturacion) return [];
 
-  const dayStart = new Date(`${fechaISO}T00:00:00`);
-  const dayEnd = new Date(dayStart);
-  dayEnd.setDate(dayEnd.getDate() + 1);
+  const dayStart = inicioDiaArgentina(fechaISO);
+  const dayEnd = addDays(dayStart, 1);
 
   return withTenantContext(session.tenantId, (tx) =>
     tx.turno.findMany({
@@ -115,7 +115,7 @@ export async function listarFacturas(fechaDesdeISO?: string) {
     tx.factura.findMany({
       where: {
         estado: { in: ["PAGADA", "ANULADA"] },
-        ...(fechaDesdeISO ? { createdAt: { gte: new Date(`${fechaDesdeISO}T00:00:00`) } } : {}),
+        ...(fechaDesdeISO ? { createdAt: { gte: inicioDiaArgentina(fechaDesdeISO) } } : {}),
         ...(miProfesionalId ? { turno: { profesionalId: miProfesionalId } } : {}),
       },
       include: {

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { obtenerDocumentoPorToken } from "@/lib/actions/historia-clinica";
 import { ImprimirButton } from "@/components/historia-clinica/imprimir-button";
+import { formatFechaArgentina } from "@/lib/date-utils";
 
 const TIPO_LABEL: Record<string, string> = {
   RECETA: "Receta",
@@ -24,7 +25,7 @@ export default async function DocumentoPage({ params }: { params: Promise<{ toke
 
         <h1 className="text-lg font-bold text-foreground">{TIPO_LABEL[documento.tipo] ?? documento.tipo}</h1>
         <p className="mt-1 text-xs text-muted-foreground">
-          {new Date(documento.fecha).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+          {formatFechaArgentina(new Date(documento.fecha), { day: "2-digit", month: "2-digit", year: "numeric" })}
         </p>
 
         <div className="mt-5 border-t border-border pt-4 text-sm">

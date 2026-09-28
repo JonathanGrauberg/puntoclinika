@@ -4,6 +4,7 @@ import { requireSessionWithModules, obtenerMiProfesionalId } from "@/lib/session
 import { withTenantContext } from "@/lib/tenant-context";
 import { permisosDe } from "@/lib/permissions";
 import { listarFacturas } from "@/lib/actions/facturacion";
+import { hoyArgentina, addDays, toISODate, inicioDiaArgentina } from "@/lib/date-utils";
 
 const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
@@ -11,11 +12,9 @@ export default async function DashboardPage() {
   const session = await requireSessionWithModules();
   const permisos = permisosDe(session.rol);
 
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const manana = new Date(hoy);
-  manana.setDate(manana.getDate() + 1);
-  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const hoy = hoyArgentina();
+  const manana = addDays(hoy, 1);
+  const inicioMes = inicioDiaArgentina(`${toISODate(hoy).slice(0, 7)}-01`);
 
   const miProfesionalId = !permisos.verTodosLosTurnos
     ? await obtenerMiProfesionalId(session.userId, session.tenantId)
@@ -33,7 +32,7 @@ export default async function DashboardPage() {
       })
     ),
     withTenantContext(session.tenantId, (tx) => tx.estudio.count({ where: { estado: "PENDIENTE" } })),
-    listarFacturas(inicioMes.toISOString().slice(0, 10)),
+    listarFacturas(toISODate(inicioMes)),
   ]);
 
   const facturadoMes = facturas.reduce((acc, f) => acc + Number(f.montoTotal), 0);

@@ -1,3 +1,5 @@
+import { formatFechaArgentina } from "@/lib/date-utils";
+
 const TIPO_LABEL: Record<string, string> = {
   RECETA: "Receta",
   ORDEN_MEDICA: "Orden médica",
@@ -29,7 +31,7 @@ export function DocumentosPaciente({ documentos }: { documentos: DocumentoPacien
             <div>
               <p className="text-sm font-semibold text-foreground">{TIPO_LABEL[d.tipo] ?? d.tipo}</p>
               <p className="text-xs text-muted-foreground">
-                {new Date(d.fecha).toLocaleDateString("es-AR")} — {d.profesional.apellido}, {d.profesional.nombre}
+                {formatFechaArgentina(new Date(d.fecha))} — {d.profesional.apellido}, {d.profesional.nombre}
               </p>
             </div>
             {d.shareUrl && (

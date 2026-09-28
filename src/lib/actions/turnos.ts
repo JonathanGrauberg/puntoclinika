@@ -6,6 +6,7 @@ import { requireSession, obtenerMiProfesionalId, type ActiveSession } from "@/li
 import { withTenantContext, type TenantClient } from "@/lib/tenant-context";
 import { audit } from "@/lib/audit";
 import { permisosDe, PermisoDenegadoError } from "@/lib/permissions";
+import { combinarFechaHoraArgentina, inicioDiaArgentina, addDays, toISODate } from "@/lib/date-utils";
 
 const turnoSchema = z.object({
   pacienteId: z.string().min(1, "Elegí un paciente"),
@@ -40,10 +41,8 @@ async function hayOtroTurno(
   tx: TenantClient,
   params: { profesionalId: string; fechaHora: Date; duracionMin: number; excludeId?: string }
 ) {
-  const dayStart = new Date(params.fechaHora);
-  dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(dayStart);
-  dayEnd.setDate(dayEnd.getDate() + 1);
+  const dayStart = inicioDiaArgentina(toISODate(params.fechaHora));
+  const dayEnd = addDays(dayStart, 1);
 
   const candidatos = await tx.turno.findMany({
     where: {
@@ -72,7 +71,7 @@ export async function crearTurno(formData: FormData): Promise<TurnoFormState | v
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
   const data = parsed.data;
-  const fechaHora = new Date(`${data.fecha}T${data.hora}:00`);
+  const fechaHora = combinarFechaHoraArgentina(data.fecha, data.hora);
   if (isNaN(fechaHora.getTime())) {
     return { error: "Fecha u hora inválida" };
   }
@@ -138,7 +137,7 @@ export async function actualizarTurno(id: string, formData: FormData): Promise<T
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
   const data = parsed.data;
-  const fechaHora = new Date(`${data.fecha}T${data.hora}:00`);
+  const fechaHora = combinarFechaHoraArgentina(data.fecha, data.hora);
   if (isNaN(fechaHora.getTime())) {
     return { error: "Fecha u hora inválida" };
   }
@@ -229,9 +228,8 @@ export async function listarTurnosSemana(profesionalId: string, weekStartISO: st
     }
   }
 
-  const weekStart = new Date(`${weekStartISO}T00:00:00`);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekEnd.getDate() + 7);
+  const weekStart = inicioDiaArgentina(weekStartISO);
+  const weekEnd = addDays(weekStart, 7);
 
   return withTenantContext(session.tenantId, (tx) =>
     tx.turno.findMany({
