@@ -40,7 +40,13 @@ function nuevaMedicion(): Medicion {
   return { id: `m_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, label: "", valor: "" };
 }
 
-export function InformeForm({ estudioId }: { estudioId: string }) {
+export function InformeForm({
+  estudioId,
+  tieneInformeAdjunto,
+}: {
+  estudioId: string;
+  tieneInformeAdjunto?: boolean;
+}) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<EstudioFormState>({});
@@ -72,11 +78,12 @@ export function InformeForm({ estudioId }: { estudioId: string }) {
 
   function handleSubmit(formData: FormData) {
     const informeTexto = componerInforme();
-    if (!informeTexto) {
-      setState({ error: "Completá al menos los hallazgos o la conclusión." });
+    const hayPdf = Boolean(archivoInforme) || tieneInformeAdjunto;
+    if (!informeTexto && !hayPdf) {
+      setState({ error: "Completá el informe (hallazgos/conclusión) o adjuntá un PDF." });
       return;
     }
-    formData.set("informeTexto", informeTexto);
+    if (informeTexto) formData.set("informeTexto", informeTexto);
 
     startTransition(async () => {
       try {
@@ -108,6 +115,12 @@ export function InformeForm({ estudioId }: { estudioId: string }) {
 
   return (
     <form action={handleSubmit} className="flex flex-col gap-4">
+      {tieneInformeAdjunto && (
+        <p className="rounded-md border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+          Este estudio ya tiene un PDF de informe adjunto — podés firmar directamente sin completar nada más
+          acá abajo, o agregar texto/plantilla si querés sumar algo.
+        </p>
+      )}
       <div className="flex flex-wrap gap-2">
         {PLANTILLAS.map((p) => (
           <button

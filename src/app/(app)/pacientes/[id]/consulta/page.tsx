@@ -6,11 +6,19 @@ import { permisosDe } from "@/lib/permissions";
 import { obtenerPaciente } from "@/lib/actions/pacientes";
 import { listarEstudiosDePaciente } from "@/lib/actions/estudios";
 import { listarHistoriaClinica } from "@/lib/actions/historia-clinica";
+import { obtenerTurnoActivo } from "@/lib/actions/turnos";
 import { NuevaEntradaForm } from "@/components/historia-clinica/nueva-entrada-form";
 import { HistoriaTimeline, type EntradaTimeline } from "@/components/historia-clinica/historia-timeline";
+import { CerrarConsultaButton } from "@/components/turnos/cerrar-consulta-button";
 import { formatFechaArgentina } from "@/lib/date-utils";
 
-export default async function ConsultaPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ConsultaPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ turnoId?: string }>;
+}) {
   const session = await requireSession();
   const permisos = permisosDe(session.rol);
   if (!permisos.verHistoriaClinica) {
@@ -18,10 +26,12 @@ export default async function ConsultaPage({ params }: { params: Promise<{ id: s
   }
 
   const { id } = await params;
-  const [paciente, estudios, historia] = await Promise.all([
+  const { turnoId } = await searchParams;
+  const [paciente, estudios, historia, turnoActivo] = await Promise.all([
     obtenerPaciente(id),
     listarEstudiosDePaciente(id),
     listarHistoriaClinica(id),
+    turnoId ? obtenerTurnoActivo(turnoId) : Promise.resolve(null),
   ]);
   if (!paciente) notFound();
 
@@ -39,6 +49,9 @@ export default async function ConsultaPage({ params }: { params: Promise<{ id: s
   return (
     <>
       <PageTitle title={`Consulta — ${paciente.apellido}, ${paciente.nombre}`} />
+      {turnoActivo && (
+        <CerrarConsultaButton turnoId={turnoActivo.id} practicaNombre={turnoActivo.practica.nombre} />
+      )}
       <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
         <div className="flex flex-col gap-4">
           <div className="rounded-md border border-border bg-card p-5">

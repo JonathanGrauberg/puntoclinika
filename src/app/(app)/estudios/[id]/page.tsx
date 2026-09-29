@@ -82,7 +82,7 @@ export default async function EstudioDetallePage({ params }: { params: Promise<{
           ) : permisos.informarEstudios ? (
             <div className="rounded-md border border-border bg-card p-5">
               <h2 className="mb-3 text-sm font-semibold text-foreground">Firmar informe</h2>
-              <InformeForm estudioId={estudio.id} />
+              <InformeForm estudioId={estudio.id} tieneInformeAdjunto={Boolean(estudio.informeArchivoUrl)} />
             </div>
           ) : (
             <div className="rounded-md border border-border bg-card p-5">

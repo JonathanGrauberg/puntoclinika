@@ -2,11 +2,12 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
+import type { EstadoTurno } from "@prisma/client";
 import { requireSession, obtenerMiProfesionalId, type ActiveSession } from "@/lib/session";
 import { withTenantContext, type TenantClient } from "@/lib/tenant-context";
 import { audit } from "@/lib/audit";
 import { permisosDe, PermisoDenegadoError } from "@/lib/permissions";
-import { combinarFechaHoraArgentina, inicioDiaArgentina, addDays, toISODate } from "@/lib/date-utils";
+import { combinarFechaHoraArgentina, inicioDiaArgentina, hoyArgentina, addDays, toISODate } from "@/lib/date-utils";
 
 const turnoSchema = z.object({
   pacienteId: z.string().min(1, "Elegí un paciente"),
@@ -215,6 +216,91 @@ export async function cancelarTurno(id: string): Promise<void> {
     });
   });
   revalidatePath("/turnos");
+}
+
+/**
+ * Turnos de hoy para la pantalla de sala de espera. MEDICO ve solo los
+ * propios; ADMIN/SECRETARIA pueden filtrar por profesional o ver todos.
+ */
+export async function listarSalaDeEspera(profesionalId?: string) {
+  const session = await requireSession();
+  const permisos = permisosDe(session.rol);
+  if (!permisos.gestionarTurnos) return [];
+
+  let filtroProfesionalId = profesionalId;
+  if (!permisos.verTodosLosTurnos) {
+    filtroProfesionalId = (await obtenerMiProfesionalId(session.userId, session.tenantId)) ?? undefined;
+    if (!filtroProfesionalId) return [];
+  }
+
+  const hoy = hoyArgentina();
+  const manana = addDays(hoy, 1);
+
+  return withTenantContext(session.tenantId, (tx) =>
+    tx.turno.findMany({
+      where: {
+        fechaHora: { gte: hoy, lt: manana },
+        estado: { not: "CANCELADO" },
+        ...(filtroProfesionalId ? { profesionalId: filtroProfesionalId } : {}),
+      },
+      include: { paciente: true, profesional: true, practica: true, consultorio: true },
+      orderBy: { fechaHora: "asc" },
+    })
+  );
+}
+
+async function cambiarEstadoTurno(turnoId: string, estado: EstadoTurno) {
+  const session = await requireSession();
+
+  const turno = await withTenantContext(session.tenantId, (tx) =>
+    tx.turno.findUniqueOrThrow({ where: { id: turnoId } })
+  );
+  await assertPuedeGestionarTurno(session, turno.profesionalId);
+
+  await withTenantContext(session.tenantId, async (tx) => {
+    await tx.turno.update({ where: { id: turnoId }, data: { estado } });
+    await audit(tx, {
+      tenantId: session.tenantId,
+      userId: session.userId,
+      accion: "UPDATE",
+      entidad: "Turno",
+      entidadId: turnoId,
+      detalle: { estado },
+    });
+  });
+
+  revalidatePath("/sala-espera");
+  revalidatePath("/turnos");
+}
+
+/** Secretaría marca que el paciente llegó (por si no pasó por el kiosco). */
+export async function marcarEnEspera(turnoId: string) {
+  return cambiarEstadoTurno(turnoId, "EN_ESPERA");
+}
+
+/** El médico "llama" al paciente — abre el panel de consulta desde acá. */
+export async function marcarEnAtencion(turnoId: string) {
+  return cambiarEstadoTurno(turnoId, "EN_ATENCION");
+}
+
+/** "Cerrar consulta" — libera el turno para que sepan que ya se puede llamar al siguiente. */
+export async function marcarAtendido(turnoId: string) {
+  return cambiarEstadoTurno(turnoId, "ATENDIDO");
+}
+
+export async function marcarAusente(turnoId: string) {
+  return cambiarEstadoTurno(turnoId, "AUSENTE");
+}
+
+/** Para el banner "Cerrar consulta" en el panel del paciente, cuando se llega desde sala de espera. */
+export async function obtenerTurnoActivo(turnoId: string) {
+  const session = await requireSession();
+  return withTenantContext(session.tenantId, (tx) =>
+    tx.turno.findFirst({
+      where: { id: turnoId, estado: "EN_ATENCION" },
+      include: { practica: true },
+    })
+  );
 }
 
 export async function listarTurnosSemana(profesionalId: string, weekStartISO: string) {

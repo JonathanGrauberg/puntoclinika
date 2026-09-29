@@ -5,7 +5,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import type { ModuloKey } from "@prisma/client";
 import { Building2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { NAV_ITEMS, NAV_ITEMS_SECONDARY } from "./nav-items";
+import { NAV_ITEMS, NAV_ITEMS_SECONDARY, type NavItem } from "./nav-items";
 import { NavLink } from "./nav-link";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -35,10 +35,11 @@ export function Sidebar({
   const logoSrc = mounted && resolvedTheme === "dark" ? "/brand/logo-blanco.png" : "/brand/logo-negro.png";
 
   const permisos = permisosDe(rol);
-  const visibleItems = NAV_ITEMS.filter((item) => !item.modulo || enabledModules.includes(item.modulo));
-  const visibleSecondary = NAV_ITEMS_SECONDARY.filter(
-    (item) => !item.requierePermiso || permisos[item.requierePermiso]
-  );
+  const esVisible = (item: NavItem) =>
+    (!item.modulo || enabledModules.includes(item.modulo)) &&
+    (!item.requierePermiso || permisos[item.requierePermiso]);
+  const visibleItems = NAV_ITEMS.filter(esVisible);
+  const visibleSecondary = NAV_ITEMS_SECONDARY.filter(esVisible);
 
   return (
     <aside className="flex h-full flex-col gap-4 border-r border-border bg-card p-3">

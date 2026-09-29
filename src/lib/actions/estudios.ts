@@ -50,6 +50,16 @@ export async function crearEstudio(formData: FormData): Promise<EstudioFormState
   }
   const data = parsed.data;
 
+  // Si ya se adjunta el PDF del informe al crear el estudio y quien lo
+  // sube puede firmar (médico/admin), directamente queda INFORMADO — no
+  // tiene sentido hacerlo pasar por el formulario de firma de nuevo para
+  // algo que ya está resuelto. Si lo sube secretaría (no puede firmar),
+  // el PDF queda adjunto pero el estudio sigue PENDIENTE hasta que un
+  // médico lo confirme.
+  const puedeFirmar = permisosDe(session.rol).informarEstudios;
+  const miProfesionalId = puedeFirmar ? await obtenerMiProfesionalId(session.userId, session.tenantId) : null;
+  const seFirmaDeUna = Boolean(data.informeKey) && puedeFirmar;
+
   const estudioId = await withTenantContext(session.tenantId, async (tx) => {
     const created = await tx.estudio.create({
       data: {
@@ -62,6 +72,9 @@ export async function crearEstudio(formData: FormData): Promise<EstudioFormState
         archivos: {
           create: archivoKeys.map((key, orden) => ({ tenantId: session.tenantId, key, orden })),
         },
+        ...(seFirmaDeUna
+          ? { estado: "INFORMADO", informadoPorId: miProfesionalId, informadoEn: new Date() }
+          : {}),
       },
     });
     await audit(tx, {
@@ -111,7 +124,7 @@ export async function agregarArchivosEstudio(estudioId: string, keys: string[]):
 }
 
 const informeSchema = z.object({
-  informeTexto: z.string().trim().min(1, "El informe no puede estar vacío").max(5000),
+  informeTexto: z.string().trim().max(5000).optional(),
   informeKey: z.string().optional(),
 });
 
@@ -129,12 +142,22 @@ export async function informarEstudio(id: string, formData: FormData): Promise<E
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
+  // Con un PDF adjunto (nuevo o ya existente) alcanza para firmar — el
+  // texto estructurado es la alternativa cuando no hay PDF, no un
+  // requisito aparte.
+  const yaTeniaInforme = await withTenantContext(session.tenantId, (tx) =>
+    tx.estudio.findUniqueOrThrow({ where: { id }, select: { informeArchivoUrl: true } })
+  );
+  const hayPdf = Boolean(parsed.data.informeKey || yaTeniaInforme.informeArchivoUrl);
+  if (!parsed.data.informeTexto && !hayPdf) {
+    return { error: "Completá el informe o adjuntá un PDF." };
+  }
 
   await withTenantContext(session.tenantId, async (tx) => {
     await tx.estudio.update({
       where: { id },
       data: {
-        informeTexto: parsed.data.informeTexto,
+        ...(parsed.data.informeTexto ? { informeTexto: parsed.data.informeTexto } : {}),
         ...(parsed.data.informeKey ? { informeArchivoUrl: parsed.data.informeKey } : {}),
         estado: "INFORMADO",
         informadoPorId: miProfesionalId,
