@@ -2,7 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 import { toggleVisibleEnPortal } from "@/lib/actions/historia-clinica";
+import { toISODate, formatFechaArgentina } from "@/lib/date-utils";
 
 const TIPO_LABEL: Record<string, string> = {
   NOTA: "Nota",
@@ -24,8 +26,32 @@ export interface EntradaTimeline {
   shareUrl: string | null;
 }
 
+interface Visita {
+  diaISO: string;
+  entradas: EntradaTimeline[];
+}
+
+// Agrupa por día de calendario (Argentina) — una consulta suele generar
+// varias entradas (nota + receta + indicación...) y mostrarlas todas
+// sueltas en una lista larga era imposible de leer para un paciente con
+// varias visitas en el año. Cada visita queda como una tarjeta, colapsada
+// salvo la más reciente.
+function agruparPorVisita(entradas: EntradaTimeline[]): Visita[] {
+  const porDia = new Map<string, EntradaTimeline[]>();
+  for (const e of entradas) {
+    const dia = toISODate(new Date(e.fecha));
+    if (!porDia.has(dia)) porDia.set(dia, []);
+    porDia.get(dia)!.push(e);
+  }
+  return Array.from(porDia.entries())
+    .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+    .map(([diaISO, entradas]) => ({ diaISO, entradas }));
+}
+
 export function HistoriaTimeline({ entradas }: { entradas: EntradaTimeline[] }) {
-  if (entradas.length === 0) {
+  const visitas = agruparPorVisita(entradas);
+
+  if (visitas.length === 0) {
     return (
       <p className="rounded-md border border-border bg-card p-5 text-sm text-muted-foreground">
         Todavía no hay entradas en la historia clínica de este paciente.
@@ -35,9 +61,55 @@ export function HistoriaTimeline({ entradas }: { entradas: EntradaTimeline[] }) 
 
   return (
     <div className="flex flex-col gap-3">
-      {entradas.map((e) => (
-        <EntradaCard key={e.id} entrada={e} />
+      {visitas.map((v, i) => (
+        <VisitaCard key={v.diaISO} visita={v} abiertaPorDefault={i === 0} />
       ))}
+    </div>
+  );
+}
+
+function VisitaCard({ visita, abiertaPorDefault }: { visita: Visita; abiertaPorDefault: boolean }) {
+  const [abierta, setAbierta] = useState(abiertaPorDefault);
+  const profesionales = [...new Set(visita.entradas.map((e) => `${e.profesional.apellido}, ${e.profesional.nombre}`))];
+  const resumen = Object.entries(
+    visita.entradas.reduce<Record<string, number>>((acc, e) => {
+      const label = TIPO_LABEL[e.tipo] ?? e.tipo;
+      acc[label] = (acc[label] ?? 0) + 1;
+      return acc;
+    }, {})
+  )
+    .map(([label, count]) => (count > 1 ? `${count} ${label.toLowerCase()}s` : label.toLowerCase()))
+    .join(" · ");
+
+  return (
+    <div className="rounded-md border border-border bg-card">
+      <button
+        type="button"
+        onClick={() => setAbierta((a) => !a)}
+        className="flex w-full items-center justify-between gap-2 p-4 text-left"
+      >
+        <div>
+          <p className="text-sm font-semibold text-foreground">
+            {formatFechaArgentina(new Date(visita.entradas[0].fecha), {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            })}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {profesionales.join(", ")} — {resumen}
+          </p>
+        </div>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${abierta ? "rotate-180" : ""}`} />
+      </button>
+
+      {abierta && (
+        <div className="flex flex-col gap-3 border-t border-border p-4 pt-3">
+          {visita.entradas.map((e) => (
+            <EntradaCard key={e.id} entrada={e} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -60,23 +132,18 @@ function EntradaCard({ entrada }: { entrada: EntradaTimeline }) {
   );
 
   return (
-    <div className="rounded-md border border-border bg-card p-4">
+    <div className="rounded-md border border-border p-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-semibold text-foreground">
             {TIPO_LABEL[entrada.tipo] ?? entrada.tipo}
           </span>
           <span className="text-xs text-muted-foreground">
-            {new Date(entrada.fecha).toLocaleString("es-AR", {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
+            {new Date(entrada.fecha).toLocaleTimeString("es-AR", {
               hour: "2-digit",
               minute: "2-digit",
+              timeZone: "America/Argentina/Buenos_Aires",
             })}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            — {entrada.profesional.apellido}, {entrada.profesional.nombre}
           </span>
         </div>
         <button
