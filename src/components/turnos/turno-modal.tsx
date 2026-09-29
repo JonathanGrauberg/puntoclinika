@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
+import { sileo } from "sileo";
 import { crearTurno, actualizarTurno, cancelarTurno } from "@/lib/actions/turnos";
 import type { TurnoFormState } from "@/lib/actions/turnos";
 import { PacientePicker, type PacienteOption } from "@/components/pacientes/paciente-picker";
@@ -76,6 +77,7 @@ export function TurnoModal({
         setState(result);
       } else {
         setState({});
+        sileo.success({ title: turno ? "Turno actualizado" : "Turno creado" });
         onOpenChange(false);
       }
     });
@@ -85,6 +87,7 @@ export function TurnoModal({
     if (!turno) return;
     startTransition(async () => {
       await cancelarTurno(turno.id);
+      sileo.success({ title: "Turno cancelado" });
       onOpenChange(false);
     });
   }

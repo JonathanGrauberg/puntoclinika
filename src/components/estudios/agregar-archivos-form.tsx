@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { sileo } from "sileo";
 import { MultiFileDropzone } from "./multi-file-dropzone";
 import { crearUrlSubida, agregarArchivosEstudio } from "@/lib/actions/estudios";
 
@@ -33,6 +34,7 @@ export function AgregarArchivosForm({ estudioId }: { estudioId: string }) {
           setError(result.error);
         } else {
           setArchivos([]);
+          sileo.success({ title: "Archivos agregados" });
           router.refresh();
         }
       } catch {

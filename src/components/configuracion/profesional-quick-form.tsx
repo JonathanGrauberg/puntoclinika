@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { crearProfesional } from "@/lib/actions/profesionales";
 
 const inputClass =
@@ -19,6 +20,7 @@ export function ProfesionalQuickForm() {
       } else {
         setError(undefined);
         formRef.current?.reset();
+        sileo.success({ title: "Profesional agregado" });
       }
     });
   }

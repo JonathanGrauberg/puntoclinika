@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { sileo } from "sileo";
 
 export function ActivoToggle({
   id,
@@ -23,6 +24,7 @@ export function ActivoToggle({
       if (result?.error) {
         setError(result.error);
       } else {
+        sileo.success({ title: activo ? "Desactivado" : "Activado" });
         router.refresh();
       }
     });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { crearObraSocial } from "@/lib/actions/obras-sociales";
 
 const inputClass =
@@ -19,6 +20,7 @@ export function ObraSocialQuickForm() {
       } else {
         setError(undefined);
         formRef.current?.reset();
+        sileo.success({ title: "Obra social agregada" });
       }
     });
   }

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Plus, X } from "lucide-react";
+import { sileo } from "sileo";
 import { informarEstudio, crearUrlSubida } from "@/lib/actions/estudios";
 import type { EstudioFormState } from "@/lib/actions/estudios";
 import { FileDropzone } from "./file-dropzone";
@@ -39,6 +41,7 @@ function nuevaMedicion(): Medicion {
 }
 
 export function InformeForm({ estudioId }: { estudioId: string }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<EstudioFormState>({});
   const [archivoInforme, setArchivoInforme] = useState<File | null>(null);
@@ -91,7 +94,12 @@ export function InformeForm({ estudioId }: { estudioId: string }) {
           formData.set("informeKey", key);
         }
         const result = await informarEstudio(estudioId, formData);
-        if (result?.error) setState(result);
+        if (result?.error) {
+          setState(result);
+        } else {
+          sileo.success({ title: "Informe firmado" });
+          router.refresh();
+        }
       } catch {
         setState({ error: "Falló la subida del archivo. Probá de nuevo." });
       }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { crearConsultorio } from "@/lib/actions/consultorios";
 
 const inputClass =
@@ -19,6 +20,7 @@ export function ConsultorioQuickForm() {
       } else {
         setError(undefined);
         formRef.current?.reset();
+        sileo.success({ title: "Consultorio agregado" });
       }
     });
   }

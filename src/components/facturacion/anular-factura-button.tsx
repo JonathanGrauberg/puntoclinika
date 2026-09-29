@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { sileo } from "sileo";
 import { anularFactura } from "@/lib/actions/facturacion";
 
 export function AnularFacturaButton({ facturaId }: { facturaId: string }) {
@@ -12,6 +13,7 @@ export function AnularFacturaButton({ facturaId }: { facturaId: string }) {
   function handleConfirmar() {
     startTransition(async () => {
       await anularFactura(facturaId);
+      sileo.success({ title: "Factura anulada" });
       router.refresh();
     });
   }

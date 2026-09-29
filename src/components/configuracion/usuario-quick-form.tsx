@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { crearUsuario } from "@/lib/actions/usuarios";
 
 const inputClass =
@@ -32,6 +33,7 @@ export function UsuarioQuickForm({
         setError(undefined);
         formRef.current?.reset();
         setRol("SECRETARIA");
+        sileo.success({ title: "Usuario agregado" });
       }
     });
   }

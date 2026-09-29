@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { crearPractica } from "@/lib/actions/practicas";
 
 const inputClass =
@@ -19,6 +20,7 @@ export function PracticaQuickForm() {
       } else {
         setError(undefined);
         formRef.current?.reset();
+        sileo.success({ title: "Práctica agregada" });
       }
     });
   }
