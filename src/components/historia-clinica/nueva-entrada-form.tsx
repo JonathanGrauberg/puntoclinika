@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { sileo } from "sileo";
 import { crearEntradaHistoriaClinica } from "@/lib/actions/historia-clinica";
 import type { EntradaFormState } from "@/lib/actions/historia-clinica";
 
@@ -25,17 +26,29 @@ export function NuevaEntradaForm({ pacienteId }: { pacienteId: string }) {
   const [state, setState] = useState<EntradaFormState>({});
   const [tipo, setTipo] = useState<Tipo>("NOTA");
 
-  const [texto, setTexto] = useState("");
-  const [medicamento, setMedicamento] = useState("");
+  // Un estado por tipo simple (no uno compartido) — si no, cambiar de
+  // pestaña "arrastraba" lo escrito en la anterior.
+  const [notaTexto, setNotaTexto] = useState("");
+  const [diagnosticoTexto, setDiagnosticoTexto] = useState("");
+  const [indicacionTexto, setIndicacionTexto] = useState("");
+  const [medicacion, setMedicacion] = useState("");
   const [dosis, setDosis] = useState("");
   const [cantidad, setCantidad] = useState("");
   const [diagnosticoReceta, setDiagnosticoReceta] = useState("");
   const [practicaSolicitada, setPracticaSolicitada] = useState("");
   const [motivo, setMotivo] = useState("");
 
+  const SIMPLE_STATE: Record<"NOTA" | "DIAGNOSTICO" | "INDICACION", [string, (v: string) => void]> = {
+    NOTA: [notaTexto, setNotaTexto],
+    DIAGNOSTICO: [diagnosticoTexto, setDiagnosticoTexto],
+    INDICACION: [indicacionTexto, setIndicacionTexto],
+  };
+
   function limpiar() {
-    setTexto("");
-    setMedicamento("");
+    setNotaTexto("");
+    setDiagnosticoTexto("");
+    setIndicacionTexto("");
+    setMedicacion("");
     setDosis("");
     setCantidad("");
     setDiagnosticoReceta("");
@@ -45,9 +58,9 @@ export function NuevaEntradaForm({ pacienteId }: { pacienteId: string }) {
 
   function componerContenido(): string | null {
     if (tipo === "RECETA") {
-      if (!medicamento.trim()) return null;
+      if (!medicacion.trim()) return null;
       return [
-        `Medicamento: ${medicamento.trim()}`,
+        `Medicación: ${medicacion.trim()}`,
         dosis.trim() && `Dosis: ${dosis.trim()}`,
         cantidad.trim() && `Cantidad: ${cantidad.trim()}`,
         diagnosticoReceta.trim() && `Diagnóstico: ${diagnosticoReceta.trim()}`,
@@ -61,7 +74,7 @@ export function NuevaEntradaForm({ pacienteId }: { pacienteId: string }) {
         .filter(Boolean)
         .join("\n");
     }
-    return texto.trim() || null;
+    return SIMPLE_STATE[tipo as "NOTA" | "DIAGNOSTICO" | "INDICACION"][0].trim() || null;
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -84,6 +97,7 @@ export function NuevaEntradaForm({ pacienteId }: { pacienteId: string }) {
         setState(result);
       } else {
         limpiar();
+        sileo.success({ title: `${TIPO_LABEL[tipo]} agregada` });
       }
     });
   }
@@ -110,10 +124,10 @@ export function NuevaEntradaForm({ pacienteId }: { pacienteId: string }) {
       {tipo === "RECETA" ? (
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1 sm:col-span-2">
-            <label className={labelClass}>Medicamento *</label>
+            <label className={labelClass}>Medicación *</label>
             <input
-              value={medicamento}
-              onChange={(e) => setMedicamento(e.target.value)}
+              value={medicacion}
+              onChange={(e) => setMedicacion(e.target.value)}
               placeholder="Ej: Amoxicilina 500mg"
               className={inputClass}
             />
@@ -163,8 +177,8 @@ export function NuevaEntradaForm({ pacienteId }: { pacienteId: string }) {
         </div>
       ) : (
         <textarea
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
+          value={SIMPLE_STATE[tipo as "NOTA" | "DIAGNOSTICO" | "INDICACION"][0]}
+          onChange={(e) => SIMPLE_STATE[tipo as "NOTA" | "DIAGNOSTICO" | "INDICACION"][1](e.target.value)}
           rows={3}
           placeholder={
             tipo === "NOTA" ? "Nota de la consulta..." : tipo === "DIAGNOSTICO" ? "Diagnóstico..." : "Indicación..."

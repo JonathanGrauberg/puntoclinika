@@ -10,6 +10,7 @@ import { requireSession } from "@/lib/session";
 import { withTenantContext } from "@/lib/tenant-context";
 import { audit, auditView } from "@/lib/audit";
 import { permisosDe } from "@/lib/permissions";
+import { inicioDiaArgentina } from "@/lib/date-utils";
 
 const pacienteSchema = z
   .object({
@@ -86,7 +87,7 @@ export async function crearPaciente(formData: FormData): Promise<PacienteFormSta
           dni: data.dni,
           nombre: data.nombre,
           apellido: data.apellido,
-          fechaNacimiento: data.fechaNacimiento ? new Date(data.fechaNacimiento) : null,
+          fechaNacimiento: data.fechaNacimiento ? inicioDiaArgentina(data.fechaNacimiento) : null,
           sexo: data.sexo || null,
           domicilio: data.domicilio || null,
           telefono: data.telefono || null,
@@ -137,7 +138,7 @@ export async function actualizarPaciente(id: string, formData: FormData): Promis
           dni: data.dni,
           nombre: data.nombre,
           apellido: data.apellido,
-          fechaNacimiento: data.fechaNacimiento ? new Date(data.fechaNacimiento) : null,
+          fechaNacimiento: data.fechaNacimiento ? inicioDiaArgentina(data.fechaNacimiento) : null,
           sexo: data.sexo || null,
           domicilio: data.domicilio || null,
           telefono: data.telefono || null,
@@ -165,7 +166,6 @@ export async function actualizarPaciente(id: string, formData: FormData): Promis
 
   revalidatePath("/pacientes");
   revalidatePath(`/pacientes/${id}`);
-  redirect(`/pacientes/${id}`);
 }
 
 export async function listarPacientes(query?: string) {

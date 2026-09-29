@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Stethoscope } from "lucide-react";
 import { PageTitle } from "@/components/app-shell/page-title-context";
-import { PacienteForm } from "@/components/pacientes/paciente-form";
+import { FichaPaciente } from "@/components/pacientes/ficha-paciente";
 import { PortalAcceso } from "@/components/pacientes/portal-acceso";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
@@ -49,9 +49,11 @@ export default async function EditarPacientePage({ params }: { params: Promise<{
             Panel de consulta
           </Link>
         )}
-        <div className="rounded-md border border-border bg-card p-6">
-          <PacienteForm mode="edit" paciente={paciente} readOnly={!permisos.gestionarPacientes} />
-        </div>
+        <FichaPaciente
+          paciente={paciente}
+          puedeEditar={permisos.gestionarPacientes}
+          moduloObrasSociales={moduloObrasSociales}
+        />
 
         {moduloObrasSociales && (
           <div className="rounded-md border border-border bg-card p-6">

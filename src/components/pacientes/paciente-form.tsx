@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import { sileo } from "sileo";
 import type { Paciente } from "@prisma/client";
 import { checkDniDuplicado, crearPaciente, actualizarPaciente } from "@/lib/actions/pacientes";
 import type { PacienteFormState } from "@/lib/actions/pacientes";
@@ -11,6 +12,10 @@ interface PacienteFormProps {
   mode: "create" | "edit";
   paciente?: Paciente;
   readOnly?: boolean;
+  moduloObrasSociales?: boolean;
+  /** Cuando se usa en el toggle vista/edición de la ficha (no en /pacientes/nuevo). */
+  onSaved?: () => void;
+  onCancel?: () => void;
 }
 
 const inputClass =
@@ -22,12 +27,21 @@ function toDateInputValue(date: Date | null | undefined) {
   return new Date(date).toISOString().slice(0, 10);
 }
 
-export function PacienteForm({ mode, paciente, readOnly }: PacienteFormProps) {
+export function PacienteForm({
+  mode,
+  paciente,
+  readOnly,
+  moduloObrasSociales,
+  onSaved,
+  onCancel,
+}: PacienteFormProps) {
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<PacienteFormState>({});
   const [dniWarning, setDniWarning] = useState<{ id: string; nombre: string; apellido: string } | null>(
     null
   );
+  const [dirty, setDirty] = useState(false);
+  const [confirmandoDescartar, setConfirmandoDescartar] = useState(false);
 
   async function handleDniBlur(e: React.FocusEvent<HTMLInputElement>) {
     const dni = e.target.value;
@@ -45,14 +59,28 @@ export function PacienteForm({ mode, paciente, readOnly }: PacienteFormProps) {
         mode === "create"
           ? await crearPaciente(formData)
           : await actualizarPaciente(paciente!.id, formData);
-      if (result) setState(result);
+      if (result) {
+        setState(result);
+      } else {
+        setDirty(false);
+        sileo.success({ title: "Cambios guardados" });
+        onSaved?.();
+      }
     });
+  }
+
+  function handleCancelClick() {
+    if (dirty) {
+      setConfirmandoDescartar(true);
+      return;
+    }
+    onCancel?.();
   }
 
   const fieldError = (name: keyof NonNullable<PacienteFormState["fieldErrors"]>) => state.fieldErrors?.[name];
 
   return (
-    <form action={handleSubmit} className="flex flex-col gap-5">
+    <form action={handleSubmit} onChange={() => setDirty(true)} className="flex flex-col gap-5">
       {dniWarning && (
         <div className="flex items-start gap-3 rounded-md border border-destructive/40 bg-destructive/5 p-4">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
@@ -214,18 +242,20 @@ export function PacienteForm({ mode, paciente, readOnly }: PacienteFormProps) {
           />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="obraSocialTexto" className={labelClass}>
-            Obra social / seguro
-          </label>
-          <input
-            id="obraSocialTexto"
-            name="obraSocialTexto"
-            defaultValue={paciente?.obraSocialTexto ?? ""}
-            placeholder="Ej: OSDE 210, particular..."
-            className={inputClass}
-          />
-        </div>
+        {!moduloObrasSociales && (
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="obraSocialTexto" className={labelClass}>
+              Obra social / seguro
+            </label>
+            <input
+              id="obraSocialTexto"
+              name="obraSocialTexto"
+              defaultValue={paciente?.obraSocialTexto ?? ""}
+              placeholder="Ej: OSDE 210, particular..."
+              className={inputClass}
+            />
+          </div>
+        )}
 
         <div className="flex flex-col gap-1.5 sm:col-span-2">
           <label htmlFor="alergias" className={labelClass}>
@@ -259,12 +289,42 @@ export function PacienteForm({ mode, paciente, readOnly }: PacienteFormProps) {
             >
               {pending ? "Guardando..." : mode === "create" ? "Crear paciente" : "Guardar cambios"}
             </button>
-            <Link
-              href={mode === "edit" && paciente ? `/pacientes/${paciente.id}` : "/pacientes"}
-              className="flex h-11 items-center rounded-md border border-border px-6 text-[15px] font-semibold text-foreground hover:bg-muted"
-            >
-              Cancelar
-            </Link>
+            {onCancel ? (
+              confirmandoDescartar ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-foreground">¿Descartar los cambios?</span>
+                  <button
+                    type="button"
+                    onClick={onCancel}
+                    className="h-9 rounded-md bg-destructive px-3 text-sm font-semibold text-destructive-foreground hover:opacity-90"
+                  >
+                    Sí, descartar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmandoDescartar(false)}
+                    className="h-9 rounded-md border border-border px-3 text-sm font-semibold text-foreground hover:bg-muted"
+                  >
+                    Seguir editando
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleCancelClick}
+                  className="flex h-11 items-center rounded-md border border-border px-6 text-[15px] font-semibold text-foreground hover:bg-muted"
+                >
+                  Cancelar
+                </button>
+              )
+            ) : (
+              <Link
+                href={mode === "edit" && paciente ? `/pacientes/${paciente.id}` : "/pacientes"}
+                className="flex h-11 items-center rounded-md border border-border px-6 text-[15px] font-semibold text-foreground hover:bg-muted"
+              >
+                Cancelar
+              </Link>
+            )}
           </>
         )}
       </div>

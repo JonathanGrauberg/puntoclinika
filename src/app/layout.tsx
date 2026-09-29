@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Mulish } from "next/font/google";
+import { Toaster } from "sileo";
 import { ThemeProvider } from "@/components/theme-provider";
+import "sileo/styles.css";
 import "./globals.css";
 
 const mulish = Mulish({
@@ -23,6 +25,7 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={`${mulish.variable} font-sans`}>
         <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem>
+          <Toaster theme="system" position="top-right" />
           {children}
         </ThemeProvider>
       </body>
