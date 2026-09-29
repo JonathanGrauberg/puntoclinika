@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageTitle } from "@/components/app-shell/page-title-context";
 import { CalendarDays, FileImage, Receipt, Users } from "lucide-react";
 import { requireSessionWithModules, obtenerMiProfesionalId } from "@/lib/session";
@@ -38,10 +39,15 @@ export default async function DashboardPage() {
   const facturadoMes = facturas.reduce((acc, f) => acc + Number(f.montoTotal), 0);
 
   const stats = [
-    { label: "Pacientes activos", value: pacientesCount.toLocaleString("es-AR"), icon: Users },
-    { label: "Turnos hoy", value: turnosHoyCount.toLocaleString("es-AR"), icon: CalendarDays },
-    { label: "Estudios pendientes", value: estudiosPendientesCount.toLocaleString("es-AR"), icon: FileImage },
-    { label: "Facturado este mes", value: currency.format(facturadoMes), icon: Receipt },
+    { label: "Pacientes activos", value: pacientesCount.toLocaleString("es-AR"), icon: Users, href: "/pacientes" },
+    { label: "Turnos hoy", value: turnosHoyCount.toLocaleString("es-AR"), icon: CalendarDays, href: "/turnos" },
+    {
+      label: "Estudios pendientes",
+      value: estudiosPendientesCount.toLocaleString("es-AR"),
+      icon: FileImage,
+      href: "/estudios",
+    },
+    { label: "Facturado este mes", value: currency.format(facturadoMes), icon: Receipt, href: "/facturacion" },
   ];
 
   return (
@@ -49,7 +55,11 @@ export default async function DashboardPage() {
       <PageTitle title="Inicio" />
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="flex flex-col gap-3 rounded-md border border-border bg-card p-4">
+          <Link
+            key={stat.label}
+            href={stat.href}
+            className="flex flex-col gap-3 rounded-md border border-border bg-card p-4 transition-colors hover:bg-muted/50"
+          >
             <span className="flex h-9 w-9 items-center justify-center rounded-md bg-muted text-foreground">
               <stat.icon className="h-4 w-4" />
             </span>
@@ -57,7 +67,7 @@ export default async function DashboardPage() {
               <p className="text-xl font-bold text-foreground">{stat.value}</p>
               <p className="text-xs text-muted-foreground">{stat.label}</p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 

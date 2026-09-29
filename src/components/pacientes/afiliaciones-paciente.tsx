@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { sileo } from "sileo";
 import { crearAfiliacion, eliminarAfiliacion } from "@/lib/actions/obras-sociales";
 import type { AfiliacionFormState } from "@/lib/actions/obras-sociales";
 
@@ -45,6 +46,7 @@ export function AfiliacionesPaciente({
       } else {
         setState({});
         formRef.current?.reset();
+        sileo.success({ title: "Afiliación agregada" });
         router.refresh();
       }
     });
@@ -53,6 +55,7 @@ export function AfiliacionesPaciente({
   function handleEliminar(id: string) {
     startTransition(async () => {
       await eliminarAfiliacion(id);
+      sileo.success({ title: "Afiliación quitada" });
       router.refresh();
     });
   }
@@ -90,9 +93,7 @@ export function AfiliacionesPaciente({
       {!readOnly && (
         <form ref={formRef} action={handleSubmit} className="grid gap-2 sm:grid-cols-3">
           <select name="obraSocialId" required defaultValue="" className={inputClass}>
-            <option value="" disabled>
-              Obra social
-            </option>
+            <option value="">Ninguna seleccionada</option>
             {obrasSociales.map((o) => (
               <option key={o.id} value={o.id}>
                 {o.nombre}
