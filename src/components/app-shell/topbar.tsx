@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Menu } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { NotificationBell } from "./notification-bell";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cerrarSesion } from "@/lib/actions/auth";
 import { usePageTitle } from "./page-title-context";
@@ -36,6 +37,7 @@ export function Topbar({
       </div>
 
       <div className="flex items-center gap-2">
+        <NotificationBell />
         <ThemeToggle />
         <DropdownMenu.Root>
           <Tooltip>

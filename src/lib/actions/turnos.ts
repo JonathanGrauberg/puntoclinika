@@ -249,6 +249,40 @@ export async function listarSalaDeEspera(profesionalId?: string) {
   );
 }
 
+const VENTANA_PROXIMO_MIN = 15;
+
+/**
+ * Para la campanita del topbar: qué necesita atención AHORA — pacientes ya
+ * en espera, o turnos que arrancan dentro de los próximos 15 minutos.
+ * Mismo alcance que listarSalaDeEspera (propio para médico, todos para
+ * admin/secretaría), liviano a propósito porque esto se consulta con
+ * polling desde cualquier pantalla.
+ */
+export async function obtenerNotificacionesTurnos() {
+  const turnos = await listarSalaDeEspera();
+  const ahora = Date.now();
+
+  const urgentes = turnos
+    .filter((t) => {
+      if (t.estado === "EN_ESPERA") return true;
+      if (t.estado === "RESERVADO" || t.estado === "CONFIRMADO") {
+        const inicio = new Date(t.fechaHora).getTime();
+        return inicio - ahora <= VENTANA_PROXIMO_MIN * 60_000 && inicio - ahora > -30 * 60_000;
+      }
+      return false;
+    })
+    .map((t) => ({
+      id: t.id,
+      pacienteId: t.pacienteId,
+      fechaHora: t.fechaHora,
+      estado: t.estado,
+      paciente: { nombre: t.paciente.nombre, apellido: t.paciente.apellido },
+      profesional: { nombre: t.profesional.nombre, apellido: t.profesional.apellido },
+    }));
+
+  return urgentes;
+}
+
 async function cambiarEstadoTurno(turnoId: string, estado: EstadoTurno) {
   const session = await requireSession();
 
