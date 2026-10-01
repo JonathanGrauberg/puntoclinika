@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import { FileSignature } from "lucide-react";
 import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
@@ -6,7 +8,6 @@ import { obtenerEstudio } from "@/lib/actions/estudios";
 import { EstudioGallery, InformeGallery } from "@/components/estudios/estudio-viewer";
 import { AgregarArchivosForm } from "@/components/estudios/agregar-archivos-form";
 import { AgregarInformesForm } from "@/components/estudios/agregar-informes-form";
-import { InformeForm } from "@/components/estudios/informe-form";
 import { formatFechaArgentina } from "@/lib/date-utils";
 
 export default async function EstudioDetallePage({ params }: { params: Promise<{ id: string }> }) {
@@ -85,15 +86,20 @@ export default async function EstudioDetallePage({ params }: { params: Promise<{
           )}
 
           {estudio.estado === "INFORMADO" ? (
-            <div className="rounded-md border border-border bg-card p-5">
-              <h2 className="mb-3 text-sm font-semibold text-foreground">Informe</h2>
-              <p className="whitespace-pre-wrap text-sm text-foreground">{estudio.informeTexto}</p>
-            </div>
+            estudio.informeTexto && (
+              <div className="rounded-md border border-border bg-card p-5">
+                <h2 className="mb-3 text-sm font-semibold text-foreground">Informe</h2>
+                <p className="whitespace-pre-wrap text-sm text-foreground">{estudio.informeTexto}</p>
+              </div>
+            )
           ) : permisos.informarEstudios ? (
-            <div className="rounded-md border border-border bg-card p-5">
-              <h2 className="mb-3 text-sm font-semibold text-foreground">Firmar informe</h2>
-              <InformeForm estudioId={estudio.id} tieneInformeAdjunto={estudio.informes.length > 0} />
-            </div>
+            <Link
+              href={`/estudios/${estudio.id}/informe`}
+              className="flex h-14 items-center justify-center gap-2 rounded-md bg-primary text-[15px] font-semibold text-primary-foreground hover:opacity-90"
+            >
+              <FileSignature className="h-5 w-5" />
+              Informar estudio
+            </Link>
           ) : (
             <div className="rounded-md border border-border bg-card p-5">
               <p className="text-sm text-muted-foreground">Todavía no fue informado.</p>

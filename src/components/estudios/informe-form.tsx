@@ -36,16 +36,19 @@ const textareaClass =
   "rounded-md border border-border bg-background px-3 py-2 text-[15px] text-foreground outline-none focus:border-foreground";
 const labelClass = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 
-function nuevaMedicion(): Medicion {
-  return { id: `m_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, label: "", valor: "" };
+function nuevaMedicion(label = ""): Medicion {
+  return { id: `m_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, label, valor: "" };
 }
 
 export function InformeForm({
   estudioId,
   tieneInformeAdjunto,
+  camposSugeridos,
 }: {
   estudioId: string;
   tieneInformeAdjunto?: boolean;
+  /** Mediciones típicas de la práctica (ej: "Fémur derecho") — precargan filas vacías al abrir. */
+  camposSugeridos?: string[];
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -55,7 +58,9 @@ export function InformeForm({
   const [motivo, setMotivo] = useState("");
   const [hallazgos, setHallazgos] = useState("");
   const [conclusion, setConclusion] = useState("");
-  const [mediciones, setMediciones] = useState<Medicion[]>([]);
+  const [mediciones, setMediciones] = useState<Medicion[]>(() =>
+    (camposSugeridos ?? []).map((label) => nuevaMedicion(label))
+  );
 
   function aplicarPlantilla(p: (typeof PLANTILLAS)[number]) {
     setHallazgos(p.hallazgos);

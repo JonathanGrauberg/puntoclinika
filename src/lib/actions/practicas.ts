@@ -13,7 +13,16 @@ const practicaSchema = z.object({
   precioParticular: z.coerce.number().min(0, "El precio no puede ser negativo"),
   requiereEstudio: z.coerce.boolean().optional(),
   requiereAutorizacionOS: z.coerce.boolean().optional(),
+  camposSugeridosInforme: z.string().trim().max(1000).optional(),
 });
+
+function parseCamposSugeridos(raw?: string): string[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((c) => c.trim())
+    .filter(Boolean);
+}
 
 export interface PracticaFormState {
   error?: string;
@@ -44,6 +53,7 @@ export async function crearPractica(formData: FormData): Promise<PracticaFormSta
         precioParticular: data.precioParticular,
         requiereEstudio: data.requiereEstudio ?? false,
         requiereAutorizacionOS: data.requiereAutorizacionOS ?? false,
+        camposSugeridosInforme: parseCamposSugeridos(data.camposSugeridosInforme),
       },
     });
     await audit(tx, {
@@ -52,6 +62,31 @@ export async function crearPractica(formData: FormData): Promise<PracticaFormSta
       accion: "CREATE",
       entidad: "Practica",
       entidadId: created.id,
+    });
+  });
+
+  revalidatePath("/configuracion/practicas");
+}
+
+/** Para ajustar los campos de medición sugeridos sin recargar la práctica entera. */
+export async function actualizarCamposSugeridos(id: string, raw: string): Promise<PracticaFormState | void> {
+  const session = await requireSession();
+  if (!permisosDe(session.rol).gestionarConfiguracion) {
+    return { error: "No tenés permiso para hacer esto." };
+  }
+
+  await withTenantContext(session.tenantId, async (tx) => {
+    await tx.practica.update({
+      where: { id },
+      data: { camposSugeridosInforme: parseCamposSugeridos(raw) },
+    });
+    await audit(tx, {
+      tenantId: session.tenantId,
+      userId: session.userId,
+      accion: "UPDATE",
+      entidad: "Practica",
+      entidadId: id,
+      detalle: { campo: "camposSugeridosInforme" },
     });
   });
 

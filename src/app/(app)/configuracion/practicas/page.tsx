@@ -5,6 +5,7 @@ import { permisosDe } from "@/lib/permissions";
 import { listarPracticas, togglePracticaActivo } from "@/lib/actions/practicas";
 import { PracticaQuickForm } from "@/components/configuracion/practica-quick-form";
 import { ActivoToggle } from "@/components/configuracion/activo-toggle";
+import { CamposSugeridosEditor } from "@/components/configuracion/campos-sugeridos-editor";
 
 const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
 
@@ -30,13 +31,14 @@ export default async function PracticasPage() {
               <th className="px-4 py-3 font-semibold">Nombre</th>
               <th className="px-4 py-3 font-semibold">Duración</th>
               <th className="px-4 py-3 font-semibold">Precio particular</th>
+              <th className="px-4 py-3 font-semibold">Mediciones sugeridas (informe)</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
             {practicas.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                   Todavía no hay prácticas cargadas.
                 </td>
               </tr>
@@ -47,6 +49,9 @@ export default async function PracticasPage() {
                 <td className="px-4 py-3 text-muted-foreground">{p.duracionMin} min</td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {currency.format(Number(p.precioParticular))}
+                </td>
+                <td className="px-4 py-3">
+                  <CamposSugeridosEditor practicaId={p.id} valorInicial={p.camposSugeridosInforme} />
                 </td>
                 <td className="px-4 py-3 text-right">
                   <ActivoToggle id={p.id} activo={p.activo} toggleAction={togglePracticaActivo} />

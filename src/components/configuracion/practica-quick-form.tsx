@@ -46,6 +46,12 @@ export function PracticaQuickForm() {
         className={inputClass}
       />
 
+      <input
+        name="camposSugeridosInforme"
+        placeholder="Mediciones sugeridas para el informe (ej: Fémur derecho, Diámetro biparietal)"
+        className={`${inputClass} sm:col-span-4`}
+      />
+
       <label className="flex items-center gap-2 text-sm text-foreground">
         <input type="checkbox" name="requiereEstudio" className="h-4 w-4" />
         Requiere estudio adjunto

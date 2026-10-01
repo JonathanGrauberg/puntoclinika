@@ -294,6 +294,10 @@ model Practica {
   requiereEstudio        Boolean @default(false)
   requiereAutorizacionOS Boolean @default(false)
   activo                 Boolean @default(true)
+  // Mediciones típicas de esta práctica (ej: "Fémur derecho", "Diámetro
+  // biparietal") para precargar filas vacías al abrir un informe nuevo —
+  // el médico las completa o las saca, no son obligatorias ni validadas.
+  camposSugeridosInforme String[] @default([])
 
   tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   turnos       Turno[]

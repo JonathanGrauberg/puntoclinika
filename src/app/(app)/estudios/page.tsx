@@ -55,12 +55,13 @@ export default async function EstudiosPage({
               <th className="px-4 py-3 font-semibold">Modalidad</th>
               <th className="px-4 py-3 font-semibold">Fecha</th>
               <th className="px-4 py-3 font-semibold">Estado</th>
+              <th className="px-4 py-3" />
             </tr>
           </thead>
           <tbody>
             {estudios.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                   {q ? `No se encontraron estudios para "${q}".` : "Todavía no hay estudios cargados."}
                 </td>
               </tr>
@@ -87,6 +88,16 @@ export default async function EstudiosPage({
                   >
                     {ESTADO_LABEL[e.estado] ?? e.estado}
                   </span>
+                </td>
+                <td className="px-4 py-3 text-right">
+                  {e.estado === "PENDIENTE" && permisos.informarEstudios && (
+                    <Link
+                      href={`/estudios/${e.id}/informe`}
+                      className="text-xs font-semibold text-foreground underline underline-offset-2"
+                    >
+                      Informar
+                    </Link>
+                  )}
                 </td>
               </tr>
             ))}
