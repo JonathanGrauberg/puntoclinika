@@ -25,7 +25,6 @@ const estudioSchema = z.object({
   pacienteId: z.string().min(1, "Elegí un paciente"),
   practicaId: z.string().min(1, "Elegí una práctica"),
   modalidad: z.string().trim().max(60).optional(),
-  informeKey: z.string().optional(),
   turnoId: z.string().optional(),
 });
 
@@ -35,13 +34,14 @@ export async function crearEstudio(formData: FormData): Promise<EstudioFormState
     return { error: "No tenés permiso para hacer esto." };
   }
 
-  // Las keys de las imágenes viajan como múltiples entries "archivoKeys"
-  // (una radiografía/ecografía trae varias) — no entran en el
+  // Las keys de las imágenes y de los informes viajan como múltiples
+  // entries ("archivoKeys"/"informeKeys") — no entran en el
   // Object.fromEntries de abajo porque eso colapsa valores repetidos.
   const archivoKeys = formData.getAll("archivoKeys").filter((v): v is string => typeof v === "string" && v.length > 0);
   if (archivoKeys.length === 0) {
     return { error: "Subí al menos un archivo del estudio." };
   }
+  const informeKeys = formData.getAll("informeKeys").filter((v): v is string => typeof v === "string" && v.length > 0);
 
   const raw = Object.fromEntries(formData.entries());
   const parsed = estudioSchema.safeParse(raw);
@@ -58,7 +58,7 @@ export async function crearEstudio(formData: FormData): Promise<EstudioFormState
   // médico lo confirme.
   const puedeFirmar = permisosDe(session.rol).informarEstudios;
   const miProfesionalId = puedeFirmar ? await obtenerMiProfesionalId(session.userId, session.tenantId) : null;
-  const seFirmaDeUna = Boolean(data.informeKey) && puedeFirmar;
+  const seFirmaDeUna = informeKeys.length > 0 && puedeFirmar;
 
   const estudioId = await withTenantContext(session.tenantId, async (tx) => {
     const created = await tx.estudio.create({
@@ -68,9 +68,11 @@ export async function crearEstudio(formData: FormData): Promise<EstudioFormState
         practicaId: data.practicaId,
         turnoId: data.turnoId || null,
         modalidad: data.modalidad || null,
-        informeArchivoUrl: data.informeKey || null,
         archivos: {
           create: archivoKeys.map((key, orden) => ({ tenantId: session.tenantId, key, orden })),
+        },
+        informes: {
+          create: informeKeys.map((key, orden) => ({ tenantId: session.tenantId, key, orden })),
         },
         ...(seFirmaDeUna
           ? { estado: "INFORMADO", informadoPorId: miProfesionalId, informadoEn: new Date() }
@@ -123,9 +125,39 @@ export async function agregarArchivosEstudio(estudioId: string, keys: string[]):
   revalidatePath(`/estudios/${estudioId}`);
 }
 
+/** Para "ir agregando" PDFs de informe a un estudio ya creado (firmado o no). */
+export async function agregarInformesEstudio(estudioId: string, keys: string[]): Promise<EstudioFormState | void> {
+  const session = await requireSession();
+  if (!permisosDe(session.rol).gestionarEstudios) {
+    return { error: "No tenés permiso para hacer esto." };
+  }
+  if (keys.length === 0) return;
+
+  await withTenantContext(session.tenantId, async (tx) => {
+    const yaExistentes = await tx.estudioInforme.count({ where: { estudioId } });
+    await tx.estudioInforme.createMany({
+      data: keys.map((key, i) => ({
+        tenantId: session.tenantId,
+        estudioId,
+        key,
+        orden: yaExistentes + i,
+      })),
+    });
+    await audit(tx, {
+      tenantId: session.tenantId,
+      userId: session.userId,
+      accion: "UPDATE",
+      entidad: "Estudio",
+      entidadId: estudioId,
+      detalle: { agregoInformes: keys.length },
+    });
+  });
+
+  revalidatePath(`/estudios/${estudioId}`);
+}
+
 const informeSchema = z.object({
   informeTexto: z.string().trim().max(5000).optional(),
-  informeKey: z.string().optional(),
 });
 
 export async function informarEstudio(id: string, formData: FormData): Promise<EstudioFormState | void> {
@@ -138,6 +170,7 @@ export async function informarEstudio(id: string, formData: FormData): Promise<E
     return { error: "Tu usuario no está vinculado a ningún profesional, no podés firmar informes." };
   }
 
+  const informeKeys = formData.getAll("informeKeys").filter((v): v is string => typeof v === "string" && v.length > 0);
   const parsed = informeSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
@@ -145,20 +178,31 @@ export async function informarEstudio(id: string, formData: FormData): Promise<E
   // Con un PDF adjunto (nuevo o ya existente) alcanza para firmar — el
   // texto estructurado es la alternativa cuando no hay PDF, no un
   // requisito aparte.
-  const yaTeniaInforme = await withTenantContext(session.tenantId, (tx) =>
-    tx.estudio.findUniqueOrThrow({ where: { id }, select: { informeArchivoUrl: true } })
+  const yaTeniaInformes = await withTenantContext(session.tenantId, (tx) =>
+    tx.estudioInforme.count({ where: { estudioId: id } })
   );
-  const hayPdf = Boolean(parsed.data.informeKey || yaTeniaInforme.informeArchivoUrl);
+  const hayPdf = informeKeys.length > 0 || yaTeniaInformes > 0;
   if (!parsed.data.informeTexto && !hayPdf) {
     return { error: "Completá el informe o adjuntá un PDF." };
   }
 
   await withTenantContext(session.tenantId, async (tx) => {
+    const yaExistentes = await tx.estudioInforme.count({ where: { estudioId: id } });
     await tx.estudio.update({
       where: { id },
       data: {
         ...(parsed.data.informeTexto ? { informeTexto: parsed.data.informeTexto } : {}),
-        ...(parsed.data.informeKey ? { informeArchivoUrl: parsed.data.informeKey } : {}),
+        ...(informeKeys.length > 0
+          ? {
+              informes: {
+                create: informeKeys.map((key, i) => ({
+                  tenantId: session.tenantId,
+                  key,
+                  orden: yaExistentes + i,
+                })),
+              },
+            }
+          : {}),
         estado: "INFORMADO",
         informadoPorId: miProfesionalId,
         informadoEn: new Date(),
@@ -225,6 +269,7 @@ export async function obtenerEstudio(id: string) {
         practica: true,
         informadoPor: true,
         archivos: { orderBy: { orden: "asc" } },
+        informes: { orderBy: { orden: "asc" } },
       },
     });
     if (estudio) {
@@ -262,24 +307,23 @@ export async function obtenerUrlDescargaArchivo(archivoId: string) {
   return url;
 }
 
-/** URL firmada para el informe adjunto (uno solo por estudio). */
-export async function obtenerUrlDescargaInforme(estudioId: string) {
+/** URL firmada para un PDF de informe puntual (puede haber varios por estudio). */
+export async function obtenerUrlDescargaInformeArchivo(archivoId: string) {
   const session = await requireSession();
 
-  const estudio = await withTenantContext(session.tenantId, (tx) =>
-    tx.estudio.findUniqueOrThrow({ where: { id: estudioId } })
+  const archivo = await withTenantContext(session.tenantId, (tx) =>
+    tx.estudioInforme.findUniqueOrThrow({ where: { id: archivoId } })
   );
-  if (!estudio.informeArchivoUrl) throw new Error("Ese archivo no existe.");
 
-  const url = await crearUrlDescargaEstudio(estudio.informeArchivoUrl);
+  const url = await crearUrlDescargaEstudio(archivo.key);
 
   await withTenantContext(session.tenantId, (tx) =>
     auditView(tx, {
       tenantId: session.tenantId,
       userId: session.userId,
       entidad: "Estudio",
-      entidadId: estudioId,
-      detalle: { accion: "descarga", tipo: "informe" },
+      entidadId: archivo.estudioId,
+      detalle: { accion: "descarga", tipo: "informe", archivoId },
     })
   );
 

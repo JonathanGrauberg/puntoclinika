@@ -6,7 +6,7 @@ import { Plus, X } from "lucide-react";
 import { sileo } from "sileo";
 import { informarEstudio, crearUrlSubida } from "@/lib/actions/estudios";
 import type { EstudioFormState } from "@/lib/actions/estudios";
-import { FileDropzone } from "./file-dropzone";
+import { MultiFileDropzone } from "./multi-file-dropzone";
 
 interface Medicion {
   id: string;
@@ -50,7 +50,7 @@ export function InformeForm({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<EstudioFormState>({});
-  const [archivoInforme, setArchivoInforme] = useState<File | null>(null);
+  const [archivosInforme, setArchivosInforme] = useState<File[]>([]);
 
   const [motivo, setMotivo] = useState("");
   const [hallazgos, setHallazgos] = useState("");
@@ -78,7 +78,7 @@ export function InformeForm({
 
   function handleSubmit(formData: FormData) {
     const informeTexto = componerInforme();
-    const hayPdf = Boolean(archivoInforme) || tieneInformeAdjunto;
+    const hayPdf = archivosInforme.length > 0 || tieneInformeAdjunto;
     if (!informeTexto && !hayPdf) {
       setState({ error: "Completá el informe (hallazgos/conclusión) o adjuntá un PDF." });
       return;
@@ -87,18 +87,15 @@ export function InformeForm({
 
     startTransition(async () => {
       try {
-        if (archivoInforme) {
-          const { key, url } = await crearUrlSubida(
-            archivoInforme.name,
-            archivoInforme.type || "application/octet-stream"
-          );
+        for (const archivo of archivosInforme) {
+          const { key, url } = await crearUrlSubida(archivo.name, archivo.type || "application/octet-stream");
           const res = await fetch(url, {
             method: "PUT",
-            headers: { "Content-Type": archivoInforme.type || "application/octet-stream" },
-            body: archivoInforme,
+            headers: { "Content-Type": archivo.type || "application/octet-stream" },
+            body: archivo,
           });
           if (!res.ok) throw new Error();
-          formData.set("informeKey", key);
+          formData.append("informeKeys", key);
         }
         const result = await informarEstudio(estudioId, formData);
         if (result?.error) {
@@ -207,11 +204,11 @@ export function InformeForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className={labelClass}>Adjuntar PDF (opcional)</label>
-        <FileDropzone
+        <label className={labelClass}>Adjuntar PDF (opcional, podés subir más de uno)</label>
+        <MultiFileDropzone
           accept="application/pdf"
-          archivo={archivoInforme}
-          onChange={setArchivoInforme}
+          archivos={archivosInforme}
+          onChange={setArchivosInforme}
           disabled={pending}
         />
       </div>

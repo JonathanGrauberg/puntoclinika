@@ -2,7 +2,6 @@
 
 import { useRef, useState, useTransition } from "react";
 import { PacientePicker, type PacienteOption } from "@/components/pacientes/paciente-picker";
-import { FileDropzone } from "./file-dropzone";
 import { MultiFileDropzone } from "./multi-file-dropzone";
 import { crearUrlSubida, crearEstudio } from "@/lib/actions/estudios";
 import type { EstudioFormState } from "@/lib/actions/estudios";
@@ -40,7 +39,7 @@ export function EstudioUploadForm({
   const [state, setState] = useState<EstudioFormState>({});
   const [pacienteId, setPacienteId] = useState(pacienteIdInicial ?? "");
   const [archivos, setArchivos] = useState<File[]>([]);
-  const [archivoInforme, setArchivoInforme] = useState<File | null>(null);
+  const [archivosInforme, setArchivosInforme] = useState<File[]>([]);
   const [subiendo, setSubiendo] = useState<"idle" | "subiendo" | "creando">("idle");
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -55,11 +54,11 @@ export function EstudioUploadForm({
       try {
         setSubiendo("subiendo");
         const keys = await Promise.all(archivos.map(subirArchivo));
-        const informeKey = archivoInforme ? await subirArchivo(archivoInforme) : "";
+        const informeKeys = await Promise.all(archivosInforme.map(subirArchivo));
 
         setSubiendo("creando");
         for (const key of keys) formData.append("archivoKeys", key);
-        formData.set("informeKey", informeKey);
+        for (const key of informeKeys) formData.append("informeKeys", key);
         const result = await crearEstudio(formData);
         if (result?.error) setState(result);
       } catch {
@@ -122,15 +121,15 @@ export function EstudioUploadForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className={labelClass}>Informe adjunto (opcional)</label>
+        <label className={labelClass}>Informe adjunto (opcional, podés subir más de uno)</label>
         <p className="text-xs text-muted-foreground">
-          Si ya tenés un informe en PDF (de otro sistema, dictado, etc.). Si no, el médico puede escribirlo
+          Si ya tenés el informe en PDF (de otro sistema, dictado, etc.). Si no, el médico puede escribirlo
           directamente acá cuando lo firme.
         </p>
-        <FileDropzone
+        <MultiFileDropzone
           accept="application/pdf"
-          archivo={archivoInforme}
-          onChange={setArchivoInforme}
+          archivos={archivosInforme}
+          onChange={setArchivosInforme}
           disabled={pendiente}
         />
       </div>

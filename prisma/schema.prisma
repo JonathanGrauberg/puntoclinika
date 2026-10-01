@@ -38,6 +38,7 @@ model Tenant {
   turnos                Turno[]
   estudios              Estudio[]
   estudioArchivos       EstudioArchivo[]
+  estudioInformes       EstudioInforme[]
   facturas              Factura[]
   auditLogs             AuditLog[]
   pacientePortales      PacientePortal[]
@@ -365,21 +366,17 @@ enum EstadoEstudio {
 }
 
 model Estudio {
-  id                String        @id @default(cuid())
-  tenantId          String
-  turnoId           String?
-  pacienteId        String
-  practicaId        String
-  // Adjunto opcional: un PDF de informe externo (ej: ya viene firmado de
-  // otro sistema o dictado). Independiente de informeTexto, que es lo que
-  // el médico escribe y firma acá mismo — pueden coexistir los dos.
-  informeArchivoUrl String?
-  modalidad         String?
-  estado            EstadoEstudio @default(PENDIENTE)
-  informadoPorId    String?
-  informadoEn       DateTime?
-  informeTexto      String?
-  createdAt         DateTime      @default(now())
+  id             String        @id @default(cuid())
+  tenantId       String
+  turnoId        String?
+  pacienteId     String
+  practicaId     String
+  modalidad      String?
+  estado         EstadoEstudio @default(PENDIENTE)
+  informadoPorId String?
+  informadoEn    DateTime?
+  informeTexto   String?
+  createdAt      DateTime      @default(now())
 
   tenant       Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   turno        Turno?           @relation(fields: [turnoId], references: [id])
@@ -391,12 +388,31 @@ model Estudio {
   // (que es lo que había antes). Permite subir varias juntas o ir
   // agregando después sin tocar el estudio en sí.
   archivos     EstudioArchivo[]
+  // Adjuntos opcionales: PDFs de informe externo (ej: ya vienen firmados de
+  // otro sistema o dictados). Independiente de informeTexto, que es lo que
+  // el médico escribe y firma acá mismo — pueden coexistir. Puede haber más
+  // de uno (ej: informe + imágenes clave anexas).
+  informes     EstudioInforme[]
 
   @@index([tenantId, pacienteId])
   @@index([tenantId, estado])
 }
 
 model EstudioArchivo {
+  id        String   @id @default(cuid())
+  tenantId  String
+  estudioId String
+  key       String
+  orden     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  estudio Estudio @relation(fields: [estudioId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, estudioId])
+}
+
+model EstudioInforme {
   id        String   @id @default(cuid())
   tenantId  String
   estudioId String

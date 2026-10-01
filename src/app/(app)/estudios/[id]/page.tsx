@@ -3,8 +3,9 @@ import { PageTitle } from "@/components/app-shell/page-title-context";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { obtenerEstudio } from "@/lib/actions/estudios";
-import { EstudioGallery, InformeAdjuntoViewer } from "@/components/estudios/estudio-viewer";
+import { EstudioGallery, InformeGallery } from "@/components/estudios/estudio-viewer";
 import { AgregarArchivosForm } from "@/components/estudios/agregar-archivos-form";
+import { AgregarInformesForm } from "@/components/estudios/agregar-informes-form";
 import { InformeForm } from "@/components/estudios/informe-form";
 import { formatFechaArgentina } from "@/lib/date-utils";
 
@@ -67,10 +68,19 @@ export default async function EstudioDetallePage({ params }: { params: Promise<{
             </dl>
           </div>
 
-          {estudio.informeArchivoUrl && (
+          {estudio.informes.length > 0 && (
             <div className="rounded-md border border-border bg-card p-5">
-              <h2 className="mb-3 text-sm font-semibold text-foreground">Informe adjunto</h2>
-              <InformeAdjuntoViewer estudioId={estudio.id} archivoKey={estudio.informeArchivoUrl} />
+              <h2 className="mb-3 text-sm font-semibold text-foreground">
+                Informe adjunto {estudio.informes.length > 1 && `(${estudio.informes.length})`}
+              </h2>
+              <InformeGallery archivos={estudio.informes} />
+            </div>
+          )}
+
+          {permisos.gestionarEstudios && (
+            <div className="rounded-md border border-border bg-card p-5">
+              <h2 className="mb-3 text-sm font-semibold text-foreground">Agregar más informes (PDF)</h2>
+              <AgregarInformesForm estudioId={estudio.id} />
             </div>
           )}
 
@@ -82,7 +92,7 @@ export default async function EstudioDetallePage({ params }: { params: Promise<{
           ) : permisos.informarEstudios ? (
             <div className="rounded-md border border-border bg-card p-5">
               <h2 className="mb-3 text-sm font-semibold text-foreground">Firmar informe</h2>
-              <InformeForm estudioId={estudio.id} tieneInformeAdjunto={Boolean(estudio.informeArchivoUrl)} />
+              <InformeForm estudioId={estudio.id} tieneInformeAdjunto={estudio.informes.length > 0} />
             </div>
           ) : (
             <div className="rounded-md border border-border bg-card p-5">
