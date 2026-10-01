@@ -37,10 +37,10 @@ export async function crearEstudio(formData: FormData): Promise<EstudioFormState
   // Las keys de las imágenes y de los informes viajan como múltiples
   // entries ("archivoKeys"/"informeKeys") — no entran en el
   // Object.fromEntries de abajo porque eso colapsa valores repetidos.
+  // Subir imágenes es opcional: una consulta general no siempre trae un
+  // estudio adjunto, y el médico tiene que poder escribir el informe
+  // igual (independientemente de cómo esté configurada la práctica).
   const archivoKeys = formData.getAll("archivoKeys").filter((v): v is string => typeof v === "string" && v.length > 0);
-  if (archivoKeys.length === 0) {
-    return { error: "Subí al menos un archivo del estudio." };
-  }
   const informeKeys = formData.getAll("informeKeys").filter((v): v is string => typeof v === "string" && v.length > 0);
 
   const raw = Object.fromEntries(formData.entries());
@@ -91,6 +91,12 @@ export async function crearEstudio(formData: FormData): Promise<EstudioFormState
   });
 
   revalidatePath("/estudios");
+  // Si no se adjuntó ningún archivo, lo más probable es que el médico haya
+  // entrado acá directo para escribir el informe (sin imágenes/PDF) — lo
+  // llevamos de una a esa pantalla en vez de al detalle vacío.
+  if (archivoKeys.length === 0 && informeKeys.length === 0 && puedeFirmar && !seFirmaDeUna) {
+    redirect(`/estudios/${estudioId}/informe`);
+  }
   redirect(`/estudios/${estudioId}`);
 }
 

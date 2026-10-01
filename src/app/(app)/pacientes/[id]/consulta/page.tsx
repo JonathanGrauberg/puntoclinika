@@ -7,6 +7,7 @@ import { obtenerPaciente } from "@/lib/actions/pacientes";
 import { listarEstudiosDePaciente } from "@/lib/actions/estudios";
 import { listarHistoriaClinica } from "@/lib/actions/historia-clinica";
 import { obtenerTurnoActivo } from "@/lib/actions/turnos";
+import { FileSignature } from "lucide-react";
 import { NuevaEntradaForm } from "@/components/historia-clinica/nueva-entrada-form";
 import { HistoriaTimeline, type EntradaTimeline } from "@/components/historia-clinica/historia-timeline";
 import { CerrarConsultaButton } from "@/components/turnos/cerrar-consulta-button";
@@ -51,6 +52,15 @@ export default async function ConsultaPage({
       <PageTitle title={`Consulta — ${paciente.apellido}, ${paciente.nombre}`} />
       {turnoActivo && (
         <CerrarConsultaButton turnoId={turnoActivo.id} practicaNombre={turnoActivo.practica.nombre} />
+      )}
+      {permisos.informarEstudios && (
+        <Link
+          href={`/estudios/nuevo?pacienteId=${paciente.id}`}
+          className="mb-4 flex h-12 items-center justify-center gap-2 rounded-md bg-primary text-[15px] font-semibold text-primary-foreground hover:opacity-90"
+        >
+          <FileSignature className="h-5 w-5" />
+          Crear informe
+        </Link>
       )}
       <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
         <div className="flex flex-col gap-4">

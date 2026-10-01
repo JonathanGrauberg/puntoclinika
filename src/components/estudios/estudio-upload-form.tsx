@@ -44,10 +44,6 @@ export function EstudioUploadForm({
   const formRef = useRef<HTMLFormElement>(null);
 
   function handleSubmit(formData: FormData) {
-    if (archivos.length === 0) {
-      setState({ error: "Subí al menos un archivo del estudio (una radiografía o ecografía suele traer varios)." });
-      return;
-    }
     setState({});
 
     startTransition(async () => {
@@ -108,9 +104,10 @@ export function EstudioUploadForm({
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className={labelClass}>Estudio (imágenes o PDF) *</label>
+        <label className={labelClass}>Estudio (imágenes o PDF, opcional)</label>
         <p className="text-xs text-muted-foreground">
-          Podés elegir varios archivos a la vez — una radiografía o ecografía suele traer más de una imagen.
+          Podés elegir varios archivos a la vez — una radiografía o ecografía suele traer más de una imagen. Si es
+          una consulta sin imágenes, podés dejarlo vacío y pasar directo a escribir el informe.
         </p>
         <MultiFileDropzone
           accept="image/*,application/pdf"
@@ -137,14 +134,16 @@ export function EstudioUploadForm({
       <div className="flex gap-3">
         <button
           type="submit"
-          disabled={!pacienteId || archivos.length === 0 || pendiente}
+          disabled={!pacienteId || pendiente}
           className="h-11 rounded-md bg-primary px-6 text-[15px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {subiendo === "subiendo"
             ? "Subiendo archivos..."
             : subiendo === "creando"
               ? "Guardando..."
-              : "Cargar estudio"}
+              : archivos.length === 0
+                ? "Continuar al informe"
+                : "Cargar estudio"}
         </button>
       </div>
     </form>
