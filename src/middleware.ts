@@ -22,5 +22,5 @@ export const config = {
   // /kiosco es público (pantalla en sala de espera, sin login de ningún tipo).
   // /documento es el link compartible de una receta/orden médica (token
   // random en la URL, sin ningún tipo de sesión — ver historia-clinica.ts).
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|brand|portal|kiosco|documento).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|brand|portal|kiosco|documento|circuito).*)"],
 };

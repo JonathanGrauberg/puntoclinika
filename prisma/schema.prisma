@@ -523,3 +523,16 @@ model Pago {
 
   factura Factura @relation(fields: [facturaId], references: [id], onDelete: Cascade)
 }
+
+// Notas de la página temporal /circuito (revisión del circuito entre Jona y
+// su papá). Global a propósito: no es dato de ningún centro ni de pacientes,
+// y se borra junto con la página cuando ya no haga falta.
+model CircuitoNota {
+  id        String   @id @default(cuid())
+  seccion   String
+  autor     String
+  texto     String
+  createdAt DateTime @default(now())
+
+  @@index([seccion, createdAt])
+}
