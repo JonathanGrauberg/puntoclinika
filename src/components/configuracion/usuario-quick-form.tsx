@@ -22,6 +22,7 @@ export function UsuarioQuickForm({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string>();
   const [rol, setRol] = useState("SECRETARIA");
+  const [profesionalId, setProfesionalId] = useState("__nuevo__");
   const formRef = useRef<HTMLFormElement>(null);
 
   function handleSubmit(formData: FormData) {
@@ -33,6 +34,7 @@ export function UsuarioQuickForm({
         setError(undefined);
         formRef.current?.reset();
         setRol("SECRETARIA");
+        setProfesionalId("__nuevo__");
         sileo.success({ title: "Usuario agregado" });
       }
     });
@@ -64,16 +66,33 @@ export function UsuarioQuickForm({
       </select>
 
       {rol === "MEDICO" && (
-        <select name="profesionalId" required defaultValue="" className={`${inputClass} sm:col-span-2`}>
-          <option value="" disabled>
-            Vincular a qué profesional...
-          </option>
-          {profesionalesSinUsuario.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.apellido}, {p.nombre}
-            </option>
-          ))}
-        </select>
+        <>
+          <select
+            name="profesionalId"
+            value={profesionalId}
+            onChange={(e) => setProfesionalId(e.target.value)}
+            required
+            className={`${inputClass} sm:col-span-2`}
+          >
+            <option value="__nuevo__">Crear el profesional ahora (matrícula y especialidad)</option>
+            {profesionalesSinUsuario.map((p) => (
+              <option key={p.id} value={p.id}>
+                Vincular a {p.apellido}, {p.nombre} (ya cargado)
+              </option>
+            ))}
+          </select>
+          {profesionalId === "__nuevo__" && (
+            <>
+              <input name="apellidoProfesional" placeholder="Apellido *" required className={inputClass} />
+              <input name="matricula" placeholder="Matrícula" className={inputClass} />
+              <input
+                name="especialidad"
+                placeholder="Especialidad (ej: Traumatología)"
+                className={`${inputClass} sm:col-span-2`}
+              />
+            </>
+          )}
+        </>
       )}
 
       {error && <p className="text-sm text-destructive sm:col-span-2">{error}</p>}

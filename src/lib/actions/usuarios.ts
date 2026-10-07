@@ -15,6 +15,11 @@ const usuarioSchema = z.object({
   password: z.string().min(8, "Mínimo 8 caracteres").optional().or(z.literal("")),
   rol: z.enum(["ADMIN", "SECRETARIA", "MEDICO", "AUDITOR"]),
   profesionalId: z.string().optional(),
+  // Solo cuando profesionalId === "__nuevo__": datos para crear el profesional
+  // en el mismo paso (en vez de cargarlo antes en Profesionales).
+  apellidoProfesional: z.string().trim().max(100).optional(),
+  matricula: z.string().trim().max(50).optional(),
+  especialidad: z.string().trim().max(100).optional(),
 });
 
 export interface UsuarioFormState {
@@ -33,6 +38,10 @@ export async function crearUsuario(formData: FormData): Promise<UsuarioFormState
     return { error: parsed.error.issues[0]?.message ?? "Datos inválidos" };
   }
   const data = parsed.data;
+  const creaProfesional = data.rol === "MEDICO" && data.profesionalId === "__nuevo__";
+  if (creaProfesional && !data.apellidoProfesional) {
+    return { error: "Falta el apellido del profesional." };
+  }
 
   try {
     await withTenantContext(session.tenantId, async (tx) => {
@@ -61,7 +70,18 @@ export async function crearUsuario(formData: FormData): Promise<UsuarioFormState
         data: { userId: user.id, tenantId: session.tenantId, rol: data.rol as RolTenant },
       });
 
-      if (data.profesionalId) {
+      if (creaProfesional) {
+        await tx.profesional.create({
+          data: {
+            tenantId: session.tenantId,
+            userId: user.id,
+            nombre: data.nombre,
+            apellido: data.apellidoProfesional!,
+            matricula: data.matricula || null,
+            especialidad: data.especialidad || null,
+          },
+        });
+      } else if (data.profesionalId) {
         await tx.profesional.update({
           where: { id: data.profesionalId },
           data: { userId: user.id },

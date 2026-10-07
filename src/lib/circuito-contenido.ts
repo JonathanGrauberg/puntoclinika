@@ -39,7 +39,9 @@ export const SECCIONES: SeccionCircuito[] = [
     texto:
       "Crea un usuario de login para cada uno, con rol MÉDICO, y lo vincula a su profesional. Sin ese vínculo no pueden firmar informes. También crea las secretarias con rol SECRETARIA.",
     respuesta:
-      "Pregunta de Jona: ¿es necesario vincularlo después? ¿No se puede crear el usuario y ya indicar que es médico y su especialidad, en vez de hacer dos pasos? Hoy son dos pasos porque Profesional y Usuario son cosas distintas: un profesional puede existir sin tener login (por ejemplo, uno que solo figura en la agenda). Pero el formulario de Usuarios ya exige elegir un profesional existente al crear un MÉDICO, así que hay que cargar el profesional primero. Se puede unir en un solo paso: al crear un usuario con rol MÉDICO, pedir ahí mismo matrícula y especialidad y crear el profesional automáticamente. Queda pendiente de hacer.",
+      "Pregunta de Jona: ¿es necesario vincularlo después? ¿No se puede crear el usuario y ya indicar que es médico y su especialidad, en vez de hacer dos pasos? Hoy son dos pasos porque Profesional y Usuario son cosas distintas: un profesional puede existir sin tener login (por ejemplo, uno que solo figura en la agenda). Pero el formulario de Usuarios ya exige elegir un profesional existente al crear un MÉDICO, así que hay que cargar el profesional primero. Se puede unir en un solo paso: al crear un usuario con rol MÉDICO, pedir ahí mismo matrícula y especialidad y crear el profesional automáticamente. (Ya resuelto, ver abajo.)",
+    resuelto:
+      "Al crear un usuario con rol Médico ahora se puede crear el profesional en el mismo paso (apellido, matrícula y especialidad), sin cargarlo antes. También se puede vincular a uno ya cargado.",
   },
   {
     id: "1.3",
