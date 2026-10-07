@@ -33,7 +33,7 @@ export default async function InformarEstudioPage({ params }: { params: Promise<
         Volver al estudio
       </Link>
 
-      <div className="mx-auto flex max-w-3xl flex-col gap-4">
+      <div className="mx-auto flex max-w-5xl flex-col gap-4">
         <div className="rounded-md border border-border bg-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>

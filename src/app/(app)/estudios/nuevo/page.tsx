@@ -22,7 +22,7 @@ export default async function NuevoEstudioPage({
   return (
     <>
       <PageTitle title="Nuevo estudio" />
-      <div className="max-w-xl rounded-md border border-border bg-card p-6">
+      <div className="max-w-3xl rounded-md border border-border bg-card p-6">
         <EstudioUploadForm
           pacientes={pacientes}
           practicas={practicas.map((p) => ({ id: p.id, nombre: p.nombre }))}

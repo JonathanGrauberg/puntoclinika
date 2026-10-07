@@ -91,6 +91,11 @@ export function formatFechaArgentina(date: Date, opts?: Intl.DateTimeFormatOptio
   return date.toLocaleDateString("es-AR", { timeZone: ARG_TIME_ZONE, ...opts });
 }
 
+/** Solo la hora (HH:mm) en Argentina, para pantallas server-rendered. */
+export function formatHoraArgentina(date: Date): string {
+  return date.toLocaleTimeString("es-AR", { timeZone: ARG_TIME_ZONE, hour: "2-digit", minute: "2-digit" });
+}
+
 /** Ídem para fecha+hora. */
 export function formatFechaHoraArgentina(date: Date, opts?: Intl.DateTimeFormatOptions): string {
   return date.toLocaleString("es-AR", { timeZone: ARG_TIME_ZONE, ...opts });

@@ -13,7 +13,7 @@ export default async function NuevoPacientePage() {
   return (
     <>
       <PageTitle title="Nuevo paciente" />
-      <div className="max-w-2xl rounded-md border border-border bg-card p-6">
+      <div className="max-w-4xl rounded-md border border-border bg-card p-6">
         <PacienteForm mode="create" />
       </div>
     </>

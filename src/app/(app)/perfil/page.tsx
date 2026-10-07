@@ -8,7 +8,7 @@ export default async function PerfilPage() {
   return (
     <>
       <PageTitle title="Mi perfil" />
-      <div className="flex max-w-2xl flex-col gap-4">
+      <div className="flex max-w-3xl flex-col gap-4">
         <div className="rounded-md border border-border bg-card p-6">
           <h2 className="mb-3 text-sm font-semibold text-foreground">Datos</h2>
           <dl className="flex flex-col gap-2 text-sm">
