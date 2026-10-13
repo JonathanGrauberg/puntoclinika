@@ -86,10 +86,32 @@ export default async function EstudioDetallePage({ params }: { params: Promise<{
           )}
 
           {estudio.estado === "INFORMADO" ? (
-            estudio.informeTexto && (
+            (estudio.informeTexto || estudio.firma) && (
               <div className="rounded-md border border-border bg-card p-5">
                 <h2 className="mb-3 text-sm font-semibold text-foreground">Informe</h2>
-                <p className="whitespace-pre-wrap text-sm text-foreground">{estudio.informeTexto}</p>
+                {estudio.informeTexto && (
+                  <p className="whitespace-pre-wrap text-sm text-foreground">{estudio.informeTexto}</p>
+                )}
+                {estudio.firma && (
+                  <div className="mt-5 flex flex-col items-end gap-1">
+                    <div className="rounded-md bg-white px-4 py-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={estudio.firma.imagen} alt="Firma del profesional" className="h-20 w-auto" />
+                    </div>
+                    {estudio.informadoPor && (
+                      <p className="text-right text-xs text-muted-foreground">
+                        Dr/a. {estudio.informadoPor.nombre} {estudio.informadoPor.apellido}
+                        {estudio.informadoPor.matricula && ` — Mat. ${estudio.informadoPor.matricula}`}
+                        {estudio.informadoPor.especialidad && ` — ${estudio.informadoPor.especialidad}`}
+                      </p>
+                    )}
+                    {estudio.informadoEn && (
+                      <p className="text-xs text-muted-foreground">
+                        {formatFechaArgentina(new Date(estudio.informadoEn))}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )
           ) : permisos.informarEstudios ? (

@@ -7,6 +7,7 @@ import { sileo } from "sileo";
 import { informarEstudio, crearUrlSubida } from "@/lib/actions/estudios";
 import type { EstudioFormState } from "@/lib/actions/estudios";
 import { MultiFileDropzone } from "./multi-file-dropzone";
+import { SignaturePad } from "./signature-pad";
 
 interface Medicion {
   id: string;
@@ -54,6 +55,7 @@ export function InformeForm({
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<EstudioFormState>({});
   const [archivosInforme, setArchivosInforme] = useState<File[]>([]);
+  const [firma, setFirma] = useState<string | null>(null);
 
   const [motivo, setMotivo] = useState("");
   const [hallazgos, setHallazgos] = useState("");
@@ -88,7 +90,12 @@ export function InformeForm({
       setState({ error: "Completá el informe (hallazgos/conclusión) o adjuntá un PDF." });
       return;
     }
+    if (informeTexto && !firma) {
+      setState({ error: "Firmá el informe en el recuadro de abajo antes de guardarlo." });
+      return;
+    }
     if (informeTexto) formData.set("informeTexto", informeTexto);
+    if (firma) formData.set("firmaDataUrl", firma);
 
     startTransition(async () => {
       try {
@@ -216,6 +223,14 @@ export function InformeForm({
           onChange={setArchivosInforme}
           disabled={pending}
         />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label className={labelClass}>Firma</label>
+        <p className="text-xs text-muted-foreground">
+          Obligatoria si escribís el informe acá. Si solo adjuntás un PDF que ya viene firmado, no hace falta.
+        </p>
+        <SignaturePad onChange={setFirma} disabled={pending} />
       </div>
 
       {state.error && <p className="text-sm text-destructive">{state.error}</p>}

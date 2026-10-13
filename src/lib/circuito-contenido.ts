@@ -102,7 +102,7 @@ export const SECCIONES: SeccionCircuito[] = [
     texto:
       "El radiólogo, a la tarde o en su casa, entra a Estudios, toca Informar, completa hallazgos y mediciones, y firma. Pasa a Informado. El médico de ecografías y densitometría hace lo mismo con sus mediciones propias.",
     resuelto:
-      "Pantalla de informe grande con mediciones sugeridas por práctica. Falta: firma dibujable y plantillas por especialidad.",
+      "Pantalla de informe grande con mediciones sugeridas por práctica y firma dibujada con mouse, touchpad o dedo (queda el nombre, la matrícula y solo la fecha; el informe firmado ya no se puede editar). Falta: plantillas por especialidad y PDF imprimible.",
   },
   {
     id: "4",
@@ -130,7 +130,7 @@ export const SECCIONES: SeccionCircuito[] = [
     items: [
       "No hay alta de clínicas ni panel de dueño.",
       "El médico que informa tiene que estar vinculado a un profesional, y eso se hace en dos pasos.",
-      "La firma es solo «informado por»: falta el recuadro dibujable (mouse, touchpad o dedo).",
+      "La firma ya es dibujable; falta el PDF imprimible del informe firmado.",
       "Los informes todavía no se adaptan a la especialidad.",
       "El portal del paciente no muestra el nombre ni el logo de cada clínica.",
     ],

@@ -39,6 +39,7 @@ model Tenant {
   estudios              Estudio[]
   estudioArchivos       EstudioArchivo[]
   estudioInformes       EstudioInforme[]
+  estudioFirmas         EstudioFirma[]
   facturas              Factura[]
   auditLogs             AuditLog[]
   pacientePortales      PacientePortal[]
@@ -397,6 +398,7 @@ model Estudio {
   // el médico escribe y firma acá mismo — pueden coexistir. Puede haber más
   // de uno (ej: informe + imágenes clave anexas).
   informes     EstudioInforme[]
+  firma        EstudioFirma?
 
   @@index([tenantId, pacienteId])
   @@index([tenantId, estado])
@@ -535,4 +537,18 @@ model CircuitoNota {
   createdAt DateTime @default(now())
 
   @@index([seccion, createdAt])
+}
+
+// Firma manuscrita (dibujada) del médico sobre un informe. Tabla aparte para
+// que la imagen no viaje en cada listado de estudios. La hora exacta de la
+// firma queda en Estudio.informadoEn (auditoría interna); no se muestra.
+model EstudioFirma {
+  id        String   @id @default(cuid())
+  tenantId  String
+  estudioId String   @unique
+  imagen    String
+  createdAt DateTime @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  estudio Estudio @relation(fields: [estudioId], references: [id], onDelete: Cascade)
 }

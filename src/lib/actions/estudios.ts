@@ -164,7 +164,12 @@ export async function agregarInformesEstudio(estudioId: string, keys: string[]):
 
 const informeSchema = z.object({
   informeTexto: z.string().trim().max(5000).optional(),
+  firmaDataUrl: z.string().optional(),
 });
+
+// ~300 KB de base64 sobra para una firma; evita que alguien suba cualquier cosa.
+const FIRMA_MAX_CHARS = 400_000;
+const FIRMA_PREFIJO = "data:image/png;base64,";
 
 export async function informarEstudio(id: string, formData: FormData): Promise<EstudioFormState | void> {
   const session = await requireSession();
@@ -184,16 +189,34 @@ export async function informarEstudio(id: string, formData: FormData): Promise<E
   // Con un PDF adjunto (nuevo o ya existente) alcanza para firmar — el
   // texto estructurado es la alternativa cuando no hay PDF, no un
   // requisito aparte.
-  const yaTeniaInformes = await withTenantContext(session.tenantId, (tx) =>
-    tx.estudioInforme.count({ where: { estudioId: id } })
-  );
+  const { yaTeniaInformes, estadoActual } = await withTenantContext(session.tenantId, async (tx) => ({
+    yaTeniaInformes: await tx.estudioInforme.count({ where: { estudioId: id } }),
+    estadoActual: (await tx.estudio.findUniqueOrThrow({ where: { id }, select: { estado: true } })).estado,
+  }));
+  // Un informe firmado no se vuelve a firmar ni a editar.
+  if (estadoActual === "INFORMADO") {
+    return { error: "Este estudio ya fue informado y firmado." };
+  }
   const hayPdf = informeKeys.length > 0 || yaTeniaInformes > 0;
   if (!parsed.data.informeTexto && !hayPdf) {
     return { error: "Completá el informe o adjuntá un PDF." };
   }
 
+  // Con texto escrito acá la firma dibujada es obligatoria; si el informe es
+  // solo un PDF que ya viene firmado de otro lado, no hace falta.
+  const firma = parsed.data.firmaDataUrl;
+  if (parsed.data.informeTexto && !firma) {
+    return { error: "Firmá el informe en el recuadro antes de guardarlo." };
+  }
+  if (firma && (!firma.startsWith(FIRMA_PREFIJO) || firma.length > FIRMA_MAX_CHARS)) {
+    return { error: "La firma no es válida. Borrala y volvé a firmar." };
+  }
+
   await withTenantContext(session.tenantId, async (tx) => {
     const yaExistentes = await tx.estudioInforme.count({ where: { estudioId: id } });
+    if (firma) {
+      await tx.estudioFirma.create({ data: { tenantId: session.tenantId, estudioId: id, imagen: firma } });
+    }
     await tx.estudio.update({
       where: { id },
       data: {
@@ -276,6 +299,7 @@ export async function obtenerEstudio(id: string) {
         informadoPor: true,
         archivos: { orderBy: { orden: "asc" } },
         informes: { orderBy: { orden: "asc" } },
+        firma: true,
       },
     });
     if (estudio) {
