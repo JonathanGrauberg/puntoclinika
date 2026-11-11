@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { CalendarPlus, FileImage, FileSignature, FileText, Stethoscope } from "lucide-react";
 import { PageTitle } from "@/components/app-shell/page-title-context";
+import { VERTICALES } from "@/lib/verticales";
 import { ActionCard, type ActionCardProps } from "@/components/dashboard/action-card";
 import { FichaPaciente } from "@/components/pacientes/ficha-paciente";
 import { PortalAcceso } from "@/components/pacientes/portal-acceso";
@@ -45,14 +46,15 @@ export default async function EditarPacientePage({ params }: { params: Promise<{
       icon: Stethoscope,
     });
   }
-  if (permisos.informarEstudios) {
+  const moduloEstudios = session.enabledModules.includes("ESTUDIOS");
+  if (moduloEstudios && permisos.informarEstudios) {
     acciones.push({
       href: `/estudios/nuevo?pacienteId=${paciente.id}`,
       label: "Crear informe",
       descripcion: "Con o sin estudio adjunto",
       icon: FileSignature,
     });
-  } else if (permisos.gestionarEstudios) {
+  } else if (moduloEstudios && permisos.gestionarEstudios) {
     acciones.push({
       href: `/estudios/nuevo?pacienteId=${paciente.id}`,
       label: "Cargar estudio",
@@ -92,6 +94,7 @@ export default async function EditarPacientePage({ params }: { params: Promise<{
             paciente={paciente}
             puedeEditar={permisos.gestionarPacientes}
             moduloObrasSociales={moduloObrasSociales}
+            dniObligatorio={VERTICALES[session.tenantTipo].dniObligatorio}
           />
 
           <div className="flex flex-col gap-4">

@@ -3,6 +3,7 @@ import { PageTitle } from "@/components/app-shell/page-title-context";
 import { PacienteForm } from "@/components/pacientes/paciente-form";
 import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
+import { VERTICALES } from "@/lib/verticales";
 
 export default async function NuevoPacientePage() {
   const session = await requireSessionWithModules();
@@ -14,7 +15,7 @@ export default async function NuevoPacientePage() {
     <>
       <PageTitle title="Nuevo paciente" />
       <div className="max-w-4xl rounded-md border border-border bg-card p-6">
-        <PacienteForm mode="create" />
+        <PacienteForm mode="create" dniObligatorio={VERTICALES[session.tenantTipo].dniObligatorio} />
       </div>
     </>
   );

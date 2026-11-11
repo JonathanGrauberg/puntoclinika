@@ -78,6 +78,13 @@ export default async function LoginPage({
             Ingresar
           </button>
         </form>
+
+        <p className="mt-5 text-center text-sm text-muted-foreground">
+          ¿Sos odontólogo y todavía no tenés cuenta?{" "}
+          <Link href="/registro" className="font-semibold text-foreground underline underline-offset-2">
+            Crear cuenta gratis
+          </Link>
+        </p>
       </div>
     </div>
   );

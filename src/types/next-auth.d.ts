@@ -6,6 +6,7 @@ declare module "next-auth" {
       id: string;
       tenantId?: string;
       tenantName?: string;
+      tenantTipo?: string;
       rol?: string;
     } & DefaultSession["user"];
   }

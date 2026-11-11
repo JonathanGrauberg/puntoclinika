@@ -1,15 +1,17 @@
 import { cache } from "react";
 import { redirect } from "next/navigation";
-import type { ModuloKey } from "@prisma/client";
+import type { ModuloKey, TipoCentro } from "@prisma/client";
 import { auth } from "@/auth";
 import { withTenantContext } from "@/lib/tenant-context";
 import { listEnabledModules } from "@/lib/modules";
+import { tipoDeCentro } from "@/lib/verticales";
 
 export interface ActiveSession {
   userId: string;
   userName: string;
   tenantId: string;
   tenantName: string;
+  tenantTipo: TipoCentro;
   rol: string;
 }
 
@@ -34,6 +36,7 @@ export const requireSession = cache(async (): Promise<ActiveSession> => {
     userName: session.user.name ?? session.user.email ?? "Usuario",
     tenantId: session.user.tenantId,
     tenantName: session.user.tenantName ?? "Centro",
+    tenantTipo: tipoDeCentro(session.user.tenantTipo),
     // Fail-closed: si por algún motivo el token no trae rol, no se le da
     // de arranque el rol más amplio (SECRETARIA) — permisosDe("") = sin permisos.
     rol: session.user.rol ?? "",

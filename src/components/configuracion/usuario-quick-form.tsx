@@ -7,17 +7,21 @@ import { crearUsuario } from "@/lib/actions/usuarios";
 const inputClass =
   "h-10 rounded-md border border-border bg-background px-3 text-sm text-foreground outline-none focus:border-foreground";
 
-const ROLES = [
-  { value: "ADMIN", label: "Administrador — acceso total" },
-  { value: "SECRETARIA", label: "Secretaría — pacientes y turnos" },
-  { value: "MEDICO", label: "Médico — su propia agenda" },
-  { value: "AUDITOR", label: "Auditor — solo lectura" },
-];
+function roles(etiquetaProfesional: string) {
+  return [
+    { value: "ADMIN", label: "Administrador — acceso total" },
+    { value: "SECRETARIA", label: "Secretaría — pacientes y turnos" },
+    { value: "MEDICO", label: `${etiquetaProfesional} — su propia agenda` },
+    { value: "AUDITOR", label: "Auditor — solo lectura" },
+  ];
+}
 
 export function UsuarioQuickForm({
   profesionalesSinUsuario,
+  etiquetaProfesional = "Médico",
 }: {
   profesionalesSinUsuario: { id: string; nombre: string; apellido: string }[];
+  etiquetaProfesional?: string;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string>();
@@ -58,7 +62,7 @@ export function UsuarioQuickForm({
         required
         className={inputClass}
       >
-        {ROLES.map((r) => (
+        {roles(etiquetaProfesional).map((r) => (
           <option key={r.value} value={r.value}>
             {r.label}
           </option>

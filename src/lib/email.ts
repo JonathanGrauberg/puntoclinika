@@ -26,6 +26,31 @@ function emailShell(bodyHtml: string): string {
   </div>`;
 }
 
+export async function sendVerificationEmail(to: string, nombre: string, verifyUrl: string) {
+  const client = getResendClient();
+  if (!client) return;
+
+  const html = emailShell(`
+    <h1 style="font-size:16px; color:#15171C; margin:0 0 12px;">Confirmá tu email</h1>
+    <p style="font-size:13.5px; color:#4B4F57; line-height:1.7; margin:0 0 20px;">
+      Hola ${nombre}, ya podés usar <b>.clinika</b>. Confirmá tu email para que podamos avisarte de lo importante.
+    </p>
+    <a href="${verifyUrl}"
+      style="display:inline-block; background:#15171C; color:#FFFFFF; text-decoration:none; font-size:13.5px; font-weight:600; padding:11px 22px; border-radius:8px;">
+      Confirmar mi email
+    </a>
+    <p style="font-size:12px; color:#9297A2; line-height:1.7; margin-top:20px;">
+      El link vale por 7 días. Si no creaste una cuenta, ignorá este mensaje.
+    </p>
+  `);
+
+  try {
+    await client.emails.send({ from: EMAIL_FROM, to, subject: "Confirmá tu email — .clinika", html });
+  } catch (err) {
+    console.error("[email] error enviando confirmación de email", err);
+  }
+}
+
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {
   const client = getResendClient();
   if (!client) return;

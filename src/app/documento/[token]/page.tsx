@@ -33,10 +33,12 @@ export default async function DocumentoPage({ params }: { params: Promise<{ toke
             <span className="text-muted-foreground">Paciente: </span>
             {documento.paciente.apellido}, {documento.paciente.nombre}
           </p>
-          <p className="text-foreground">
-            <span className="text-muted-foreground">Documento: </span>
-            {documento.paciente.dni}
-          </p>
+          {documento.paciente.dni && (
+            <p className="text-foreground">
+              <span className="text-muted-foreground">Documento: </span>
+              {documento.paciente.dni}
+            </p>
+          )}
         </div>
 
         <div className="mt-5 border-t border-border pt-4">

@@ -8,7 +8,7 @@ export interface PacienteOption {
   id: string;
   nombre: string;
   apellido: string;
-  dni: string;
+  dni?: string | null;
 }
 
 export function PacientePicker({
@@ -36,7 +36,7 @@ export function PacientePicker({
         return (
           p.nombre.toLowerCase().includes(q) ||
           p.apellido.toLowerCase().includes(q) ||
-          p.dni.includes(q)
+          (p.dni ?? "").includes(q)
         );
       })
     : pacientes.slice(0, 8);
@@ -90,7 +90,7 @@ export function PacientePicker({
           <div className="flex items-center gap-2 text-[15px] text-foreground">
             <User className="h-4 w-4 text-muted-foreground" />
             {selected.apellido}, {selected.nombre}
-            <span className="text-muted-foreground">DNI {selected.dni}</span>
+            {selected.dni && <span className="text-muted-foreground">DNI {selected.dni}</span>}
           </div>
           <button
             type="button"
@@ -150,7 +150,7 @@ export function PacientePicker({
                 <span className="text-foreground">
                   {p.apellido}, {p.nombre}
                 </span>
-                <span className="text-muted-foreground">DNI {p.dni}</span>
+                {p.dni && <span className="text-muted-foreground">DNI {p.dni}</span>}
               </button>
             ))
           )}

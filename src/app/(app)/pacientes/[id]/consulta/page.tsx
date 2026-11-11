@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { PageTitle } from "@/components/app-shell/page-title-context";
-import { requireSession } from "@/lib/session";
+import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { obtenerPaciente } from "@/lib/actions/pacientes";
 import { listarEstudiosDePaciente } from "@/lib/actions/estudios";
@@ -20,8 +20,9 @@ export default async function ConsultaPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ turnoId?: string }>;
 }) {
-  const session = await requireSession();
+  const session = await requireSessionWithModules();
   const permisos = permisosDe(session.rol);
+  const moduloEstudios = session.enabledModules.includes("ESTUDIOS");
   if (!permisos.verHistoriaClinica) {
     redirect("/pacientes");
   }
@@ -30,7 +31,7 @@ export default async function ConsultaPage({
   const { turnoId } = await searchParams;
   const [paciente, estudios, historia, turnoActivo] = await Promise.all([
     obtenerPaciente(id),
-    listarEstudiosDePaciente(id),
+    moduloEstudios ? listarEstudiosDePaciente(id) : Promise.resolve([]),
     listarHistoriaClinica(id),
     turnoId ? obtenerTurnoActivo(turnoId) : Promise.resolve(null),
   ]);
@@ -53,7 +54,7 @@ export default async function ConsultaPage({
       {turnoActivo && (
         <CerrarConsultaButton turnoId={turnoActivo.id} practicaNombre={turnoActivo.practica.nombre} />
       )}
-      {permisos.informarEstudios && (
+      {moduloEstudios && permisos.informarEstudios && (
         <Link
           href={`/estudios/nuevo?pacienteId=${paciente.id}`}
           className="mb-4 flex h-12 items-center justify-center gap-2 rounded-md bg-primary text-[15px] font-semibold text-primary-foreground hover:opacity-90"
@@ -98,6 +99,7 @@ export default async function ConsultaPage({
             </Link>
           </div>
 
+          {moduloEstudios && (
           <div className="rounded-md border border-border bg-card p-5">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-foreground">
@@ -127,6 +129,7 @@ export default async function ConsultaPage({
               </ul>
             )}
           </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-4">

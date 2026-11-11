@@ -12,10 +12,12 @@ export function FichaPaciente({
   paciente,
   puedeEditar,
   moduloObrasSociales,
+  dniObligatorio = true,
 }: {
   paciente: Paciente;
   puedeEditar: boolean;
   moduloObrasSociales: boolean;
+  dniObligatorio?: boolean;
 }) {
   const router = useRouter();
   const [editando, setEditando] = useState(false);
@@ -52,6 +54,7 @@ export function FichaPaciente({
           mode="edit"
           paciente={paciente}
           moduloObrasSociales={moduloObrasSociales}
+          dniObligatorio={dniObligatorio}
           onSaved={handleSaved}
           onCancel={() => setEditando(false)}
         />

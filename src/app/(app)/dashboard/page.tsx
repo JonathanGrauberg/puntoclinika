@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { PageTitle } from "@/components/app-shell/page-title-context";
 import { ActionCard, type ActionCardProps } from "@/components/dashboard/action-card";
+import { DashboardDental } from "@/components/dashboard/dashboard-dental";
 import { requireSessionWithModules, obtenerMiProfesionalId } from "@/lib/session";
 import { withTenantContext } from "@/lib/tenant-context";
 import { permisosDe, type Permisos } from "@/lib/permissions";
@@ -40,6 +41,10 @@ const ESTADO_LABEL: Record<string, string> = {
 
 export default async function DashboardPage() {
   const session = await requireSessionWithModules();
+  if (session.tenantTipo === "ODONTOLOGIA") {
+    return <DashboardDental session={session} />;
+  }
+
   const permisos = permisosDe(session.rol);
   const esMedico = session.rol === "MEDICO";
 

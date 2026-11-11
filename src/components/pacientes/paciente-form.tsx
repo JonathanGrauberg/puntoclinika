@@ -13,6 +13,8 @@ interface PacienteFormProps {
   paciente?: Paciente;
   readOnly?: boolean;
   moduloObrasSociales?: boolean;
+  /** En consultorios dentales el documento es opcional. */
+  dniObligatorio?: boolean;
   /** Cuando se usa en el toggle vista/edición de la ficha (no en /pacientes/nuevo). */
   onSaved?: () => void;
   onCancel?: () => void;
@@ -32,6 +34,7 @@ export function PacienteForm({
   paciente,
   readOnly,
   moduloObrasSociales,
+  dniObligatorio = true,
   onSaved,
   onCancel,
 }: PacienteFormProps) {
@@ -124,14 +127,14 @@ export function PacienteForm({
 
         <div className="flex flex-col gap-1.5">
           <label htmlFor="dni" className={labelClass}>
-            Número de documento *
+            Número de documento{dniObligatorio ? " *" : ""}
           </label>
           <input
             id="dni"
             name="dni"
-            defaultValue={paciente?.dni}
+            defaultValue={paciente?.dni ?? ""}
             onBlur={handleDniBlur}
-            required
+            required={dniObligatorio}
             className={inputClass}
           />
           {fieldError("dni") && <p className="text-xs text-destructive">{fieldError("dni")}</p>}

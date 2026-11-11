@@ -40,7 +40,31 @@ export default async function PacientesPage({
         )}
       </div>
 
-      <div className="overflow-hidden rounded-md border border-border">
+      {/* Celular y tablet vertical: tarjetas grandes, fáciles de tocar. */}
+      <ul className="flex flex-col gap-2 md:hidden">
+        {pacientes.length === 0 && (
+          <li className="rounded-xl border border-border p-6 text-center text-sm text-muted-foreground">
+            {q ? `No se encontraron pacientes para "${q}".` : "Todavía no hay pacientes cargados."}
+          </li>
+        )}
+        {pacientes.map((p) => (
+          <li key={p.id}>
+            <Link
+              href={`/pacientes/${p.id}`}
+              className="flex min-h-16 flex-col justify-center rounded-xl border border-border bg-card px-4 py-3 active:bg-muted"
+            >
+              <span className="text-base font-semibold text-foreground">
+                {p.apellido}, {p.nombre}
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {[p.telefono, p.dni && `DNI ${p.dni}`].filter(Boolean).join(" · ") || "Sin teléfono"}
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden overflow-hidden rounded-md border border-border md:block">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-border bg-muted/50 text-xs uppercase text-muted-foreground">
             <tr>
@@ -62,7 +86,7 @@ export default async function PacientesPage({
               <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/40">
                 <td className="px-4 py-3">
                   <Link href={`/pacientes/${p.id}`} className="font-medium text-foreground hover:underline">
-                    {p.dni}
+                    {p.dni || "Ver ficha"}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-foreground">

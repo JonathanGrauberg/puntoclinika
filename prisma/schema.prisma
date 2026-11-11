@@ -20,12 +20,27 @@ datasource db {
 // Núcleo multi-tenant
 // ---------------------------------------------------------------------------
 
+// Tipo de centro (vertical). Define qué módulos, textos y panel de inicio ve.
+// MEDICO = centros médicos existentes; ODONTOLOGIA = consultorios dentales;
+// LABORATORIO = laboratorios dentales (reservado, se habilita en la fase E).
+enum TipoCentro {
+  MEDICO
+  ODONTOLOGIA
+  LABORATORIO
+}
+
 model Tenant {
   id        String   @id @default(cuid())
   slug      String   @unique
   nombre    String
   logoUrl   String?
   activo    Boolean  @default(true)
+  tipo      TipoCentro @default(MEDICO)
+  // Fin de la prueba gratis (se fija al registrarse solo). La suscripción
+  // completa llega en la fase D.
+  trialHasta          DateTime?
+  terminosAceptadosEn DateTime?
+  terminosVersion     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -54,11 +69,39 @@ model User {
   passwordHash String
   nombre       String
   activo       Boolean  @default(true)
+  // null = todavía no confirmó su mail (aviso suave, no bloquea el uso).
+  emailVerificadoEn DateTime?
   createdAt    DateTime @default(now())
 
   memberships         Membership[]
   profesional         Profesional?
   passwordResetTokens PasswordResetToken[]
+  emailVerificacionTokens EmailVerificacionToken[]
+}
+
+// Confirmación de mail al registrarse. Global como PasswordResetToken (sin
+// tenantId ni RLS); hash sha256 del token, un solo uso.
+model EmailVerificacionToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+// Cuenta de intentos de registro por IP (límite anti-abuso del alta pública).
+// Global, sin datos de salud.
+model RegistroIntento {
+  id        String   @id @default(cuid())
+  ip        String
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
 }
 
 // Recuperación de contraseña del login de staff. Global como User (sin
@@ -179,7 +222,8 @@ model Paciente {
   id                         String        @id @default(cuid())
   tenantId                   String
   tipoDocumento              TipoDocumento @default(DNI)
-  dni                        String
+  // Opcional: el alta rápida (consultorios dentales) pide solo nombre y teléfono.
+  dni                        String?
   nombre                     String
   apellido                   String
   fechaNacimiento            DateTime?
@@ -193,6 +237,8 @@ model Paciente {
   // Campo libre para tenants sin el módulo OBRAS_SOCIALES activado.
   // Cuando el módulo esté activo, se usa el modelo Afiliacion (fase 3).
   obraSocialTexto            String?
+  // Dato de ejemplo cargado al registrarse; se borra con un clic.
+  esDemo                     Boolean       @default(false)
   createdAt                  DateTime      @default(now())
   updatedAt                  DateTime      @updatedAt
 
@@ -351,6 +397,7 @@ model Turno {
   // propio: si la práctica lo requiere y esto está vacío, se considera
   // pendiente (ver badge en la agenda).
   numeroAutorizacionOS String?
+  esDemo               Boolean     @default(false)
   createdAt            DateTime    @default(now())
 
   tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)

@@ -4,6 +4,7 @@ import { requireSessionWithModules } from "@/lib/session";
 import { permisosDe } from "@/lib/permissions";
 import { listarUsuarios, toggleMembershipActivo } from "@/lib/actions/usuarios";
 import { listarProfesionalesSinUsuario } from "@/lib/actions/profesionales";
+import { VERTICALES } from "@/lib/verticales";
 import { UsuarioQuickForm } from "@/components/configuracion/usuario-quick-form";
 import { ActivoToggle } from "@/components/configuracion/activo-toggle";
 
@@ -30,7 +31,10 @@ export default async function UsuariosPage() {
       <PageTitle title="Usuarios" />
       <div className="mb-4 rounded-md border border-border bg-card p-5">
         <h2 className="mb-3 text-sm font-semibold text-foreground">Agregar usuario</h2>
-        <UsuarioQuickForm profesionalesSinUsuario={profesionalesSinUsuario} />
+        <UsuarioQuickForm
+          profesionalesSinUsuario={profesionalesSinUsuario}
+          etiquetaProfesional={VERTICALES[session.tenantTipo].profesional}
+        />
         <p className="mt-3 text-xs text-muted-foreground">
           Si el email ya existe en otro centro, se le agrega acceso acá con este rol (mismo login, sin
           pedir contraseña de nuevo).
@@ -52,7 +56,7 @@ export default async function UsuariosPage() {
               <tr key={u.membershipId} className={`border-b border-border last:border-0 ${!u.activo ? "opacity-50" : ""}`}>
                 <td className="px-4 py-3 text-foreground">{u.nombre}</td>
                 <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
-                <td className="px-4 py-3 text-muted-foreground">{ROL_LABEL[u.rol] ?? u.rol}</td>
+                <td className="px-4 py-3 text-muted-foreground">{u.rol === "MEDICO" ? VERTICALES[session.tenantTipo].profesional : (ROL_LABEL[u.rol] ?? u.rol)}</td>
                 <td className="px-4 py-3 text-right">
                   {u.userId === session.userId ? (
                     <span className="text-xs text-muted-foreground">Vos</span>
