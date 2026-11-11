@@ -71,6 +71,7 @@ export function Odontograma({
   pacienteId,
   hallazgos,
   puedeEditar,
+  puedePedirLab,
   denticionInicial,
   piezaFiltro,
   onVerHistoria,
@@ -78,6 +79,7 @@ export function Odontograma({
   pacienteId: string;
   hallazgos: HallazgoVista[];
   puedeEditar: boolean;
+  puedePedirLab: boolean;
   denticionInicial: Denticion;
   piezaFiltro: number | null;
   onVerHistoria: (pieza: number) => void;
@@ -187,6 +189,7 @@ export function Odontograma({
         pacienteId={pacienteId}
         hallazgos={hallazgos}
         puedeEditar={puedeEditar}
+        puedePedirLab={puedePedirLab}
         onClose={() => setAbierta(null)}
         onVerHistoria={onVerHistoria}
       />

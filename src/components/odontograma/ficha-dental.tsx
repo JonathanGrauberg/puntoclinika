@@ -22,14 +22,19 @@ export function FichaDental({
   hallazgos,
   entradas,
   puedeEditar,
+  puedePedirLab,
   denticionInicial,
+  pedidosLab,
   datos,
 }: {
   pacienteId: string;
   hallazgos: HallazgoVista[];
   entradas: EntradaTimeline[];
   puedeEditar: boolean;
+  puedePedirLab: boolean;
   denticionInicial: Denticion;
+  /** Pedidos de laboratorio de este paciente (vacío si no corresponde). */
+  pedidosLab: React.ReactNode;
   datos: React.ReactNode;
 }) {
   const [pestana, setPestana] = useState<Pestana>("odontograma");
@@ -57,10 +62,12 @@ export function FichaDental({
       </div>
 
       {pestana === "odontograma" && (
+        <>
         <Odontograma
           pacienteId={pacienteId}
           hallazgos={hallazgos}
           puedeEditar={puedeEditar}
+          puedePedirLab={puedePedirLab}
           denticionInicial={denticionInicial}
           piezaFiltro={piezaFiltro}
           onVerHistoria={(pieza) => {
@@ -68,6 +75,8 @@ export function FichaDental({
             setPestana("historia");
           }}
         />
+        {pedidosLab}
+        </>
       )}
 
       {pestana === "historia" && (

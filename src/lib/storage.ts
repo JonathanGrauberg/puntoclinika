@@ -1,4 +1,10 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
 
@@ -37,6 +43,41 @@ export async function crearUrlSubidaEstudio(params: {
   });
   const url = await getSignedUrl(r2, command, { expiresIn: URL_EXPIRACION_SEGUNDOS });
   return { key, url };
+}
+
+/** Archivos de un pedido de laboratorio: la key lleva el consultorio y el pedido, así se verifica a quién pertenece. */
+export function prefijoArchivosPedido(tenantId: string, pedidoId: string) {
+  return `pedidos/${tenantId}/${pedidoId}/`;
+}
+
+export async function crearUrlSubidaPedido(params: {
+  tenantId: string;
+  pedidoId: string;
+  nombreArchivo: string;
+  contentType: string;
+}) {
+  const key = `${prefijoArchivosPedido(params.tenantId, params.pedidoId)}${randomUUID()}-${sanitizarNombreArchivo(params.nombreArchivo)}`;
+  const command = new PutObjectCommand({ Bucket: BUCKET, Key: key, ContentType: params.contentType });
+  const url = await getSignedUrl(r2, command, { expiresIn: 900 }); // 15 min: un STL grande tarda en subir
+  return { key, url };
+}
+
+/** Tamaño real del objeto subido (null si no existe), para no confiar en lo que dice el navegador. */
+export async function tamanoDeObjeto(key: string): Promise<number | null> {
+  try {
+    const r = await r2.send(new HeadObjectCommand({ Bucket: BUCKET, Key: key }));
+    return r.ContentLength ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function borrarObjeto(key: string) {
+  try {
+    await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+  } catch {
+    // Mejor un archivo huérfano que un error para quien usa la pantalla.
+  }
 }
 
 /** URL firmada de solo lectura para ver/descargar un estudio ya subido. */

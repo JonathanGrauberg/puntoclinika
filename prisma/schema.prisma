@@ -63,6 +63,7 @@ model Tenant {
   pedidosLaboratorio    PedidoLaboratorio[]
   pedidoEstados         PedidoEstado[]
   pedidoMensajes        PedidoMensaje[]
+  pedidoArchivos        PedidoArchivo[]
   facturas              Factura[]
   auditLogs             AuditLog[]
   pacientePortales      PacientePortal[]
@@ -761,6 +762,7 @@ model PedidoLaboratorio {
   tipoTrabajo TipoTrabajo?    @relation(fields: [tipoTrabajoId], references: [id], onDelete: SetNull)
   estados     PedidoEstado[]
   mensajes    PedidoMensaje[]
+  archivos    PedidoArchivo[]
 
   @@unique([tenantId, numero])
   @@index([tenantId, estado])
@@ -792,6 +794,25 @@ model PedidoMensaje {
   autorTipo   AutorMensaje
   autorNombre String
   texto       String
+  creadoEn    DateTime     @default(now())
+
+  tenant Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pedido PedidoLaboratorio @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@index([pedidoId, creadoEn])
+}
+
+// Fotos, PDF y escaneos 3D (STL/PLY/OBJ) del pedido. El archivo vive en R2 (bucket privado).
+model PedidoArchivo {
+  id          String       @id @default(cuid())
+  tenantId    String
+  pedidoId    String
+  key         String
+  nombre      String
+  contentType String
+  tamano      Int
+  subidoPor   String
+  autorTipo   AutorMensaje @default(CONSULTORIO)
   creadoEn    DateTime     @default(now())
 
   tenant Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)

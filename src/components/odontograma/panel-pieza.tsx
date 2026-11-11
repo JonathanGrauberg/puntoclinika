@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowLeft, ClipboardList, History, Pencil, Stethoscope, X } from "lucide-react";
+import { ArrowLeft, ClipboardList, FlaskConical, History, Pencil, Stethoscope, X } from "lucide-react";
 import { sileo } from "sileo";
 import type { EstadoHallazgo, SuperficieDental, TipoHallazgo } from "@prisma/client";
 import { anotarHallazgo, anularHallazgo, registrarTratamiento, type HallazgoVista } from "@/lib/actions/odontograma";
@@ -36,6 +37,7 @@ export function PanelPieza({
   pacienteId,
   hallazgos,
   puedeEditar,
+  puedePedirLab,
   onClose,
   onVerHistoria,
 }: {
@@ -43,6 +45,7 @@ export function PanelPieza({
   pacienteId: string;
   hallazgos: HallazgoVista[];
   puedeEditar: boolean;
+  puedePedirLab: boolean;
   onClose: () => void;
   onVerHistoria: (pieza: number) => void;
 }) {
@@ -58,6 +61,7 @@ export function PanelPieza({
               pacienteId={pacienteId}
               hallazgos={hallazgos.filter((h) => h.pieza === pieza)}
               puedeEditar={puedeEditar}
+              puedePedirLab={puedePedirLab}
               onClose={onClose}
               onVerHistoria={onVerHistoria}
             />
@@ -73,6 +77,7 @@ function ContenidoPanel({
   pacienteId,
   hallazgos,
   puedeEditar,
+  puedePedirLab,
   onClose,
   onVerHistoria,
 }: {
@@ -80,6 +85,7 @@ function ContenidoPanel({
   pacienteId: string;
   hallazgos: HallazgoVista[];
   puedeEditar: boolean;
+  puedePedirLab: boolean;
   onClose: () => void;
   onVerHistoria: (pieza: number) => void;
 }) {
@@ -227,6 +233,15 @@ function ContenidoPanel({
                   <span className="block text-sm font-normal text-muted-foreground">Se pinta de azul y queda en la historia</span>
                 </span>
               </button>
+              {puedePedirLab && (
+                <Link href={`/laboratorio/pedidos/nuevo?pacienteId=${pacienteId}&piezas=${pieza}`} className={botonGrande}>
+                  <FlaskConical className="h-5 w-5 shrink-0" />
+                  <span>
+                    Pedir trabajo de laboratorio
+                    <span className="block text-sm font-normal text-muted-foreground">Con la pieza {pieza} ya elegida</span>
+                  </span>
+                </Link>
+              )}
             </div>
           )}
 

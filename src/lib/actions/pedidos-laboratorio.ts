@@ -5,11 +5,17 @@ import { revalidatePath } from "next/cache";
 import type { EstadoPedidoLab } from "@prisma/client";
 import { requireSession } from "@/lib/session";
 import { withTenantContext, type TenantClient } from "@/lib/tenant-context";
-import { audit } from "@/lib/audit";
+import { audit, auditView } from "@/lib/audit";
 import { permisosDe } from "@/lib/permissions";
 import { hasModule } from "@/lib/modules";
 import { inicioDiaArgentina } from "@/lib/date-utils";
-import { ORDEN_ESTADOS } from "@/lib/pedidos-lab";
+import {
+  EXTENSIONES_ARCHIVO_PEDIDO,
+  MAX_BYTES_ARCHIVO_PEDIDO,
+  ORDEN_ESTADOS,
+  extensionDe,
+} from "@/lib/pedidos-lab";
+import { borrarObjeto, crearUrlDescargaEstudio, crearUrlSubidaPedido, prefijoArchivosPedido, tamanoDeObjeto } from "@/lib/storage";
 
 type Sesion = Awaited<ReturnType<typeof requireSession>>;
 type Resultado = { error?: string; id?: string };
@@ -34,6 +40,7 @@ export interface PedidoDetalle extends PedidoResumen {
   laboratorio: { id: string; nombre: string; telefono: string | null; email: string | null };
   estados: { id: string; estado: EstadoPedidoLab; nota: string | null; autor: string; autorTipo: string; creadoEn: Date }[];
   mensajes: { id: string; autorTipo: string; autorNombre: string; texto: string; creadoEn: Date }[];
+  archivos: { id: string; nombre: string; contentType: string; tamano: number; subidoPor: string; autorTipo: string; creadoEn: Date }[];
 }
 
 const resumenSelect = {
@@ -104,6 +111,10 @@ export async function obtenerPedido(id: string): Promise<PedidoDetalle | null> {
         laboratorio: { select: { id: true, nombre: true, telefono: true, email: true } },
         estados: { orderBy: { creadoEn: "asc" } },
         mensajes: { orderBy: { creadoEn: "asc" } },
+        archivos: {
+          orderBy: { creadoEn: "asc" },
+          select: { id: true, nombre: true, contentType: true, tamano: true, subidoPor: true, autorTipo: true, creadoEn: true },
+        },
       },
     });
     return p;
@@ -243,5 +254,124 @@ export async function enviarMensajePedido(id: string, texto: string): Promise<Re
     return {};
   });
   revalidatePath(`/laboratorio/pedidos/${id}`);
+  return r;
+}
+
+// --- Archivos --------------------------------------------------------------
+
+/** Paso 1 de la subida: valida y devuelve la URL firmada para subir directo a R2. */
+export async function prepararSubidaArchivoPedido(
+  pedidoId: string,
+  nombre: string,
+  contentType: string,
+  tamano: number
+): Promise<{ error: string } | { key: string; url: string }> {
+  const ext = extensionDe(nombre);
+  if (!EXTENSIONES_ARCHIVO_PEDIDO.includes(ext)) {
+    return { error: `Ese tipo de archivo no se puede subir (.${ext || "?"}). Probá con foto, PDF, STL, PLY, OBJ o ZIP.` };
+  }
+  if (tamano > MAX_BYTES_ARCHIVO_PEDIDO) return { error: "El archivo pesa más de 50 MB." };
+
+  const session = await requireSession();
+  if (!permisosDe(session.rol).gestionarLaboratorio) return { error: "No tenés permiso para hacer esto." };
+  const existe = await withTenantContext(session.tenantId, async (tx) => {
+    if (!(await hasModule(tx, session.tenantId, "LABORATORIO"))) return false;
+    return (await tx.pedidoLaboratorio.count({ where: { id: pedidoId } })) === 1;
+  });
+  if (!existe) return { error: "No encontré el pedido." };
+
+  return crearUrlSubidaPedido({
+    tenantId: session.tenantId,
+    pedidoId,
+    nombreArchivo: nombre,
+    contentType: contentType || "application/octet-stream",
+  });
+}
+
+/** Paso 2: el archivo ya está en R2; se anota en el pedido (verificando su tamaño real). */
+export async function registrarArchivoPedido(
+  pedidoId: string,
+  key: string,
+  nombre: string,
+  contentType: string
+): Promise<Resultado> {
+  const r = await paraGestionar(async (tx, s) => {
+    if (!key.startsWith(prefijoArchivosPedido(s.tenantId, pedidoId))) return { error: "Archivo inválido." };
+    if (!EXTENSIONES_ARCHIVO_PEDIDO.includes(extensionDe(nombre))) return { error: "Tipo de archivo no permitido." };
+    const existe = await tx.pedidoLaboratorio.count({ where: { id: pedidoId } });
+    if (existe !== 1) return { error: "No encontré el pedido." };
+
+    const tamano = await tamanoDeObjeto(key);
+    if (tamano === null) return { error: "No se terminó de subir el archivo. Probá de nuevo." };
+    if (tamano > MAX_BYTES_ARCHIVO_PEDIDO) {
+      await borrarObjeto(key);
+      return { error: "El archivo pesa más de 50 MB." };
+    }
+    const a = await tx.pedidoArchivo.create({
+      data: {
+        tenantId: s.tenantId,
+        pedidoId,
+        key,
+        nombre: nombre.slice(-120),
+        contentType: contentType || "application/octet-stream",
+        tamano,
+        subidoPor: s.userName,
+      },
+    });
+    await audit(tx, {
+      tenantId: s.tenantId,
+      userId: s.userId,
+      accion: "CREATE",
+      entidad: "PedidoArchivo",
+      entidadId: a.id,
+      detalle: { pedidoId },
+    });
+    return { id: a.id };
+  });
+  revalidatePath(`/laboratorio/pedidos/${pedidoId}`);
+  return r;
+}
+
+export async function urlDescargaArchivoPedido(archivoId: string): Promise<{ error: string } | { url: string }> {
+  const session = await requireSession();
+  if (!permisosDe(session.rol).verLaboratorio) return { error: "No tenés permiso para hacer esto." };
+  const archivo = await withTenantContext(session.tenantId, async (tx) => {
+    const a = await tx.pedidoArchivo.findUnique({ where: { id: archivoId } });
+    if (a) {
+      await auditView(tx, {
+        tenantId: session.tenantId,
+        userId: session.userId,
+        entidad: "PedidoArchivo",
+        entidadId: a.id,
+        detalle: { pedidoId: a.pedidoId },
+      });
+    }
+    return a;
+  });
+  if (!archivo) return { error: "No encontré el archivo." };
+  return { url: await crearUrlDescargaEstudio(archivo.key) };
+}
+
+export async function eliminarArchivoPedido(archivoId: string): Promise<Resultado> {
+  let key: string | null = null;
+  let pedidoId: string | null = null;
+  const r = await paraGestionar(async (tx, s) => {
+    const a = await tx.pedidoArchivo.findUnique({ where: { id: archivoId } });
+    if (!a) return { error: "No encontré el archivo." };
+    await tx.pedidoArchivo.delete({ where: { id: archivoId } });
+    await audit(tx, {
+      tenantId: s.tenantId,
+      userId: s.userId,
+      accion: "DELETE",
+      entidad: "PedidoArchivo",
+      entidadId: archivoId,
+      detalle: { pedidoId: a.pedidoId },
+    });
+    key = a.key;
+    pedidoId = a.pedidoId;
+    return {};
+  });
+  if (key) await borrarObjeto(key);
+  if (pedidoId) revalidatePath(`/laboratorio/pedidos/${pedidoId}`);
   return r;
 }

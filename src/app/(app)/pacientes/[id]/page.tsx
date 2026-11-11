@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { CalendarPlus, FileImage, FileSignature, FileText, Phone, Stethoscope, TriangleAlert } from "lucide-react";
+import { CalendarPlus, FileImage, FileSignature, FileText, FlaskConical, Phone, Stethoscope, TriangleAlert } from "lucide-react";
 import { PageTitle } from "@/components/app-shell/page-title-context";
 import { VERTICALES } from "@/lib/verticales";
 import { ActionCard, type ActionCardProps } from "@/components/dashboard/action-card";
@@ -11,6 +11,8 @@ import { permisosDe } from "@/lib/permissions";
 import { obtenerPaciente, obtenerAccesoPortal } from "@/lib/actions/pacientes";
 import { listarDocumentosPaciente, listarHistoriaClinica } from "@/lib/actions/historia-clinica";
 import { listarHallazgos } from "@/lib/actions/odontograma";
+import { listarPedidosDePaciente } from "@/lib/actions/pedidos-laboratorio";
+import { ESTADOS_PEDIDO, numeroPedido, textoPiezas } from "@/lib/pedidos-lab";
 import { obtenerTurnoActivo } from "@/lib/actions/turnos";
 import { DocumentosPaciente } from "@/components/historia-clinica/documentos-paciente";
 import type { EntradaTimeline } from "@/components/historia-clinica/historia-timeline";
@@ -34,7 +36,9 @@ export default async function EditarPacientePage({
     session.tenantTipo === "ODONTOLOGIA" && permisos.verHistoriaClinica && session.enabledModules.includes("ODONTOGRAMA");
   const { id } = await params;
   const { turnoId } = await searchParams;
-  const [paciente, acceso, documentos, afiliaciones, obrasSociales, hallazgos, historia, turnoActivo] = await Promise.all([
+  const moduloLab = session.enabledModules.includes("LABORATORIO") && permisos.verLaboratorio;
+  const [paciente, acceso, documentos, afiliaciones, obrasSociales, hallazgos, historia, turnoActivo, pedidosLab] =
+    await Promise.all([
     obtenerPaciente(id),
     obtenerAccesoPortal(id),
     permisos.verDocumentosPaciente && !esFichaDental ? listarDocumentosPaciente(id) : Promise.resolve([]),
@@ -43,6 +47,7 @@ export default async function EditarPacientePage({
     esFichaDental ? listarHallazgos(id) : Promise.resolve([]),
     esFichaDental ? listarHistoriaClinica(id) : Promise.resolve([]),
     esFichaDental && turnoId ? obtenerTurnoActivo(turnoId) : Promise.resolve(null),
+    esFichaDental && moduloLab ? listarPedidosDePaciente(id) : Promise.resolve([]),
   ]);
 
   if (!paciente) notFound();
@@ -115,6 +120,15 @@ export default async function EditarPacientePage({
                 {paciente.telefono}
               </a>
             )}
+            {permisos.gestionarLaboratorio && moduloLab && (
+              <Link
+                href={`/laboratorio/pedidos/nuevo?pacienteId=${paciente.id}`}
+                className="flex h-11 items-center gap-2 rounded-xl border border-border px-4 text-sm font-semibold text-foreground hover:bg-muted"
+              >
+                <FlaskConical className="h-4 w-4" />
+                Pedir trabajo de laboratorio
+              </Link>
+            )}
             {permisos.gestionarTurnos && session.enabledModules.includes("TURNOS") && (
               <Link
                 href="/turnos"
@@ -141,6 +155,32 @@ export default async function EditarPacientePage({
             hallazgos={hallazgos}
             entradas={entradas}
             puedeEditar={permisos.gestionarHistoriaClinica}
+            puedePedirLab={permisos.gestionarLaboratorio && moduloLab}
+            pedidosLab={
+              pedidosLab.length > 0 ? (
+                <section className="rounded-2xl border border-border bg-card p-4">
+                  <h3 className="mb-2 text-sm font-bold text-foreground">Pedidos de laboratorio</h3>
+                  <ul className="flex flex-col gap-1.5">
+                    {pedidosLab.map((p) => (
+                      <li key={p.id}>
+                        <Link
+                          href={`/laboratorio/pedidos/${p.id}`}
+                          className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-muted"
+                        >
+                          <span className="min-w-0 text-sm text-foreground">
+                            <b>{numeroPedido(p.numero)}</b> {p.trabajo}
+                            {p.piezas.length > 0 && ` · pieza ${textoPiezas(p.piezas)}`}
+                          </span>
+                          <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${ESTADOS_PEDIDO[p.estado].chip}`}>
+                            {ESTADOS_PEDIDO[p.estado].label}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ) : null
+            }
             denticionInicial={edad !== null && edad < 7 ? "temporales" : "permanentes"}
             datos={
               <div className="grid items-start gap-4 xl:grid-cols-2">

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { AlertTriangle, ArrowLeft, Phone } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Phone, Printer } from "lucide-react";
 import { PageTitle } from "@/components/app-shell/page-title-context";
 import { PedidoAcciones } from "@/components/laboratorio/pedido-acciones";
+import { PedidoArchivos } from "@/components/laboratorio/pedido-archivos";
 import { PedidoMensajes } from "@/components/laboratorio/pedido-mensajes";
 import { obtenerPedido } from "@/lib/actions/pedidos-laboratorio";
 import { formatFechaArgentina, formatFechaHoraArgentina, hoyArgentina } from "@/lib/date-utils";
@@ -99,6 +100,17 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
         </section>
 
         {puedeGestionar && <PedidoAcciones pedidoId={pedido.id} estado={pedido.estado} />}
+
+        <PedidoArchivos pedidoId={pedido.id} archivos={pedido.archivos} puedeEditar={puedeGestionar} />
+
+        <Link
+          href={`/imprimir/pedido/${pedido.id}`}
+          target="_blank"
+          className="flex h-12 items-center justify-center gap-2 rounded-xl border border-border text-base font-semibold text-foreground hover:bg-muted"
+        >
+          <Printer className="h-5 w-5" />
+          Imprimir orden con QR
+        </Link>
 
         <section className="rounded-2xl border border-border bg-card p-4">
           <h2 className="mb-3 text-sm font-bold text-muted-foreground">Recorrido del pedido</h2>

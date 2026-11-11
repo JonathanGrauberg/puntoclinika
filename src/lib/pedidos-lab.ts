@@ -86,3 +86,18 @@ export function textoPiezas(piezas: number[]) {
   const orden = [...piezas].sort((a, b) => a - b).map(String);
   return orden.length === 1 ? orden[0] : `${orden.slice(0, -1).join(", ")} y ${orden[orden.length - 1]}`;
 }
+
+export const MAX_BYTES_ARCHIVO_PEDIDO = 50 * 1024 * 1024;
+
+/** Fotos, PDF, escaneos 3D (STL/PLY/OBJ) y comprimidos. */
+export const EXTENSIONES_ARCHIVO_PEDIDO = ["jpg", "jpeg", "png", "webp", "heic", "pdf", "stl", "ply", "obj", "zip"];
+
+export function extensionDe(nombre: string) {
+  const i = nombre.lastIndexOf(".");
+  return i === -1 ? "" : nombre.slice(i + 1).toLowerCase();
+}
+
+export function formatoBytes(n: number) {
+  if (n < 1024 * 1024) return `${Math.max(1, Math.round(n / 1024))} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1).replace(".", ",")} MB`;
+}
