@@ -84,6 +84,7 @@ function Formulario({
         email: b.email,
         especialidades: b.especialidades,
         notas: b.notas,
+        activo: b.activo,
       };
       const r = laboratorio ? await actualizarLaboratorio(laboratorio.id, datos) : await crearLaboratorio(datos);
       if (r.error) return void sileo.error({ title: r.error });
@@ -183,6 +184,18 @@ function Formulario({
           onChange={(e) => setB({ ...b, notas: e.target.value })}
         />
       </label>
+
+      {laboratorio && (
+        <label className="flex min-h-11 items-center gap-3 text-base font-semibold text-foreground">
+          <input
+            type="checkbox"
+            className="h-5 w-5"
+            checked={b.activo}
+            onChange={(e) => setB({ ...b, activo: e.target.checked })}
+          />
+          Lo sigo usando
+        </label>
+      )}
 
       <button
         type="button"

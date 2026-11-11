@@ -1,4 +1,4 @@
-import type { EstadoHallazgo, EstadoTurno, SuperficieDental, TipoHallazgo } from "@prisma/client";
+import type { EstadoHallazgo, EstadoPedidoLab, EstadoTurno, SuperficieDental, TipoHallazgo } from "@prisma/client";
 import type { TenantClient } from "./tenant-context";
 import { addDays, combinarFechaHoraArgentina, hoyArgentina, toISODate } from "./date-utils";
 
@@ -48,6 +48,19 @@ const PRESTACIONES_DEMO: [number, number, string, number][] = [
   [0, 16, "Arreglo de caries (obturación) — pieza 16 (MO)", 14],
   [0, 26, "Corona — pieza 26", 45],
   [2, 36, "Endodoncia (conducto) — pieza 36", 30],
+];
+
+// [paciente, pieza, trabajo, estado, laboratorio (0/1), días hasta la entrega (negativo = ya pasó)]
+const PEDIDOS_DEMO: [number, number[], string, EstadoPedidoLab, number, number][] = [
+  [0, [36], "Corona de zirconio", "EN_PROCESO", 0, 5],
+  [1, [], "Prótesis parcial acrílica", "ENVIADO", 1, 12],
+  [2, [], "Placa de relajación (bruxismo)", "TERMINADO", 1, 1],
+  [3, [25], "Corona de porcelana sobre metal", "EN_PRUEBA", 0, -2],
+];
+
+const LABORATORIOS_DEMO = [
+  { nombre: "Laboratorio Sonrisa (ejemplo)", contacto: "Marcelo", telefono: "3434 55-0201", especialidades: ["Zirconio", "Prótesis fija"] },
+  { nombre: "Protesis Paraná (ejemplo)", contacto: "Laura", telefono: "3434 55-0202", especialidades: ["Prótesis removible", "Ortodoncia"] },
 ];
 
 export async function cargarDemoDental(
@@ -119,6 +132,42 @@ export async function cargarDemoDental(
       esDemo: true,
     })),
   });
+
+  const laboratorios = await tx.laboratorio.createManyAndReturn({
+    data: LABORATORIOS_DEMO.map((l) => ({ tenantId: opts.tenantId, ...l, esDemo: true })),
+    select: { id: true, nombre: true },
+  });
+  const idLab = (i: number) => laboratorios.find((l) => l.nombre === LABORATORIOS_DEMO[i].nombre)!.id;
+  const ultimo = await tx.pedidoLaboratorio.aggregate({ where: { tenantId: opts.tenantId }, _max: { numero: true } });
+  let numero = ultimo._max.numero ?? 0;
+  const hoyDia = hoyArgentina();
+  const pedidos = await tx.pedidoLaboratorio.createManyAndReturn({
+    data: PEDIDOS_DEMO.map(([i, piezas, trabajo, estado, lab, dias]) => ({
+      tenantId: opts.tenantId,
+      numero: ++numero,
+      pacienteId: idDe(i),
+      laboratorioId: idLab(lab),
+      trabajo,
+      piezas,
+      estado,
+      fechaEntrega: addDays(hoyDia, dias),
+      creadoEn: new Date(Date.now() - 6 * 86_400_000),
+      esDemo: true,
+    })),
+    select: { id: true, estado: true },
+  });
+  const orden: EstadoPedidoLab[] = ["ENVIADO", "RECIBIDO", "EN_PROCESO", "EN_PRUEBA", "TERMINADO"];
+  await tx.pedidoEstado.createMany({
+    data: pedidos.flatMap((p, k) =>
+      orden.slice(0, orden.indexOf(p.estado) + 1).map((estado, j) => ({
+        tenantId: opts.tenantId,
+        pedidoId: p.id,
+        estado,
+        autor: "Datos de ejemplo",
+        creadoEn: new Date(Date.now() - (6 - j - k * 0.1) * 86_400_000),
+      }))
+    ),
+  });
   return { pacientes: pacientes.length, turnos: turnos.length };
 }
 
@@ -129,6 +178,9 @@ export async function cargarDemoDental(
  */
 export async function borrarDemo(tx: TenantClient, tenantId: string) {
   // El filtro por centro es explícito (además de RLS): este código también lo usa el seed, que corre sin RLS.
+  await tx.pedidoLaboratorio.deleteMany({ where: { esDemo: true, tenantId } });
+  await tx.laboratorio.deleteMany({ where: { esDemo: true, tenantId, pedidos: { none: {} } } });
+  await tx.laboratorio.updateMany({ where: { esDemo: true, tenantId }, data: { esDemo: false } });
   await tx.turno.deleteMany({ where: { esDemo: true, tenantId } });
   await tx.hallazgoDental.deleteMany({ where: { esDemo: true, tenantId } });
   await tx.historiaClinicaEntry.deleteMany({ where: { esDemo: true, tenantId } });
@@ -140,6 +192,7 @@ export async function borrarDemo(tx: TenantClient, tenantId: string) {
       historia: { none: {} },
       facturas: { none: {} },
       estudios: { none: {} },
+      pedidosLaboratorio: { none: {} },
     },
   });
   const { count: conservados } = await tx.paciente.updateMany({

@@ -183,6 +183,7 @@ const laboratorioSchema = z.object({
     .refine((v) => v === null || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "El email no parece válido"),
   especialidades: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
   notas: textoOpcional(500),
+  activo: z.boolean().default(true),
 });
 
 export async function crearLaboratorio(input: z.input<typeof laboratorioSchema>): Promise<Resultado> {
@@ -212,6 +213,10 @@ export async function actualizarLaboratorio(id: string, input: z.input<typeof la
 
 export async function eliminarLaboratorio(id: string): Promise<Resultado> {
   const r = await conPermiso(async (tx, s) => {
+    const conPedidos = await tx.pedidoLaboratorio.count({ where: { laboratorioId: id } });
+    if (conPedidos > 0) {
+      return { error: "Ya tiene pedidos, así que no se puede borrar. Desmarcá “Lo sigo usando” y deja de aparecer." };
+    }
     const res = await tx.laboratorio.deleteMany({ where: { id, tenantId: s.tenantId } });
     if (res.count === 0) return { error: "No encontré ese laboratorio." };
     await audit(tx, { tenantId: s.tenantId, userId: s.userId, accion: "DELETE", entidad: "Laboratorio", entidadId: id });

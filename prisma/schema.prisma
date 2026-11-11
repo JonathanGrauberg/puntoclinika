@@ -60,6 +60,9 @@ model Tenant {
   hallazgosDentales     HallazgoDental[]
   tiposTrabajo          TipoTrabajo[]
   laboratorios          Laboratorio[]
+  pedidosLaboratorio    PedidoLaboratorio[]
+  pedidoEstados         PedidoEstado[]
+  pedidoMensajes        PedidoMensaje[]
   facturas              Factura[]
   auditLogs             AuditLog[]
   pacientePortales      PacientePortal[]
@@ -256,6 +259,7 @@ model Paciente {
   portal       PacientePortal?
   afiliaciones Afiliacion[]
   hallazgosDentales HallazgoDental[]
+  pedidosLaboratorio PedidoLaboratorio[]
 
   @@unique([tenantId, dni])
   @@index([tenantId])
@@ -692,6 +696,7 @@ model Laboratorio {
 
   tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   tiposTrabajo TipoTrabajo[]
+  pedidos      PedidoLaboratorio[]
 
   @@index([tenantId])
 }
@@ -709,6 +714,88 @@ model TipoTrabajo {
 
   tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   laboratorio Laboratorio? @relation(fields: [laboratorioId], references: [id], onDelete: SetNull)
+  pedidos     PedidoLaboratorio[]
 
   @@index([tenantId, categoria])
+}
+
+enum EstadoPedidoLab {
+  ENVIADO
+  RECIBIDO
+  EN_PROCESO
+  EN_PRUEBA
+  TERMINADO
+  ENTREGADO
+  DEVUELTO // devuelto con observaciones
+}
+
+enum AutorMensaje {
+  CONSULTORIO
+  LABORATORIO
+}
+
+model PedidoLaboratorio {
+  id            String          @id @default(cuid())
+  tenantId      String
+  // Correlativo por consultorio (el que se imprime en la orden).
+  numero        Int
+  pacienteId    String
+  laboratorioId String
+  tipoTrabajoId String?
+  // Copia del nombre: si después editás o borrás el trabajo del catálogo, el pedido no cambia.
+  trabajo       String
+  piezas        Int[]
+  color         String?
+  notas         String?
+  fechaEntrega  DateTime?
+  estado        EstadoPedidoLab @default(ENVIADO)
+  creadoPorId   String?
+  creadoEn      DateTime        @default(now())
+  actualizadoEn DateTime        @updatedAt
+  entregadoEn   DateTime?
+  esDemo        Boolean         @default(false)
+
+  tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  paciente    Paciente        @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  laboratorio Laboratorio     @relation(fields: [laboratorioId], references: [id], onDelete: Restrict)
+  tipoTrabajo TipoTrabajo?    @relation(fields: [tipoTrabajoId], references: [id], onDelete: SetNull)
+  estados     PedidoEstado[]
+  mensajes    PedidoMensaje[]
+
+  @@unique([tenantId, numero])
+  @@index([tenantId, estado])
+  @@index([tenantId, pacienteId])
+}
+
+// Historial de estados: solo se agrega.
+model PedidoEstado {
+  id        String          @id @default(cuid())
+  tenantId  String
+  pedidoId  String
+  estado    EstadoPedidoLab
+  nota      String?
+  // Quién lo cambió (nombre ya resuelto: después puede ser el laboratorio por el link).
+  autor     String
+  autorTipo AutorMensaje    @default(CONSULTORIO)
+  creadoEn  DateTime        @default(now())
+
+  tenant Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pedido PedidoLaboratorio @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@index([pedidoId, creadoEn])
+}
+
+model PedidoMensaje {
+  id          String       @id @default(cuid())
+  tenantId    String
+  pedidoId    String
+  autorTipo   AutorMensaje
+  autorNombre String
+  texto       String
+  creadoEn    DateTime     @default(now())
+
+  tenant Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pedido PedidoLaboratorio @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@index([pedidoId, creadoEn])
 }
