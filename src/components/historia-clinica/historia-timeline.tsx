@@ -12,6 +12,7 @@ const TIPO_LABEL: Record<string, string> = {
   INDICACION: "Indicación",
   RECETA: "Receta",
   ORDEN_MEDICA: "Orden médica",
+  PRESTACION: "Tratamiento",
 };
 
 const ES_DOCUMENTO = new Set(["RECETA", "ORDEN_MEDICA"]);
@@ -22,6 +23,8 @@ export interface EntradaTimeline {
   contenido: string;
   fecha: Date;
   visibleEnPortal: boolean;
+  /** Piezas dentales a las que se refiere (odontología). */
+  piezas?: number[];
   profesional: { nombre: string; apellido: string };
   shareUrl: string | null;
 }
@@ -161,6 +164,16 @@ function EntradaCard({ entrada }: { entrada: EntradaTimeline }) {
       </div>
 
       <p className="whitespace-pre-wrap text-sm text-foreground">{entrada.contenido}</p>
+
+      {entrada.piezas && entrada.piezas.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {entrada.piezas.map((p) => (
+            <span key={p} className="rounded-full border border-border px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+              Pieza {p}
+            </span>
+          ))}
+        </div>
+      )}
 
       {ES_DOCUMENTO.has(entrada.tipo) && entrada.shareUrl && (
         <div className="mt-3 flex flex-wrap gap-2 border-t border-border pt-3">

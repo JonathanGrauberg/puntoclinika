@@ -29,6 +29,10 @@ export default async function ConsultaPage({
 
   const { id } = await params;
   const { turnoId } = await searchParams;
+  // En consultorios dentales la ficha ya reúne odontograma e historia: el panel de consulta es la misma pantalla.
+  if (session.tenantTipo === "ODONTOLOGIA" && session.enabledModules.includes("ODONTOGRAMA")) {
+    redirect(`/pacientes/${id}${turnoId ? `?turnoId=${turnoId}` : ""}`);
+  }
   const [paciente, estudios, historia, turnoActivo] = await Promise.all([
     obtenerPaciente(id),
     moduloEstudios ? listarEstudiosDePaciente(id) : Promise.resolve([]),

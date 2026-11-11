@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { toISODate, formatFechaArgentina } from "@/lib/date-utils";
 
 const TIPO_LABEL: Record<string, string> = {
+  PRESTACION: "Tratamiento",
   NOTA: "Nota",
   DIAGNOSTICO: "Diagnóstico",
   INDICACION: "Indicación",

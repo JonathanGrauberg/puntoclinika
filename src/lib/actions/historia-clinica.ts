@@ -83,6 +83,7 @@ export async function crearEntradaHistoriaClinica(formData: FormData): Promise<E
   });
 
   revalidatePath(`/pacientes/${data.pacienteId}/consulta`);
+  revalidatePath(`/pacientes/${data.pacienteId}`);
 }
 
 export async function toggleVisibleEnPortal(id: string, visible: boolean) {
@@ -108,6 +109,7 @@ export async function toggleVisibleEnPortal(id: string, visible: boolean) {
   });
 
   revalidatePath(`/pacientes/${pacienteId}/consulta`);
+  revalidatePath(`/pacientes/${pacienteId}`);
 }
 
 /**

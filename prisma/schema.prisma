@@ -55,6 +55,7 @@ model Tenant {
   estudioArchivos       EstudioArchivo[]
   estudioInformes       EstudioInforme[]
   estudioFirmas         EstudioFirma[]
+  hallazgosDentales     HallazgoDental[]
   facturas              Factura[]
   auditLogs             AuditLog[]
   pacientePortales      PacientePortal[]
@@ -249,6 +250,7 @@ model Paciente {
   historia     HistoriaClinicaEntry[]
   portal       PacientePortal?
   afiliaciones Afiliacion[]
+  hallazgosDentales HallazgoDental[]
 
   @@unique([tenantId, dni])
   @@index([tenantId])
@@ -325,6 +327,7 @@ model Profesional {
   turnos             Turno[]
   estudiosInformados Estudio[]              @relation("EstudioInformadoPor")
   historia           HistoriaClinicaEntry[]
+  hallazgosDentales  HallazgoDental[]
 
   @@index([tenantId])
 }
@@ -487,6 +490,8 @@ enum TipoHistoriaClinica {
   INDICACION
   RECETA
   ORDEN_MEDICA
+  // Tratamiento realizado sobre una o más piezas dentales (odontograma).
+  PRESTACION
 }
 
 model HistoriaClinicaEntry {
@@ -499,6 +504,9 @@ model HistoriaClinicaEntry {
   // El médico decide, entrada por entrada, si el paciente la ve en su
   // Portal — no es un interruptor general del paciente (fase 2, portal).
   visibleEnPortal Boolean             @default(false)
+  // Piezas dentales (numeración FDI) a las que se refiere la entrada.
+  piezas          Int[]               @default([])
+  esDemo          Boolean             @default(false)
   fecha           DateTime            @default(now())
 
   paciente    Paciente             @relation(fields: [pacienteId], references: [id])
@@ -598,4 +606,62 @@ model EstudioFirma {
 
   tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   estudio Estudio @relation(fields: [estudioId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Odontograma (fase B del vertical dental)
+// ---------------------------------------------------------------------------
+
+enum SuperficieDental {
+  VESTIBULAR
+  LINGUAL // lingual (inferiores) o palatina (superiores)
+  MESIAL
+  DISTAL
+  OCLUSAL // oclusal (posteriores) o incisal (anteriores)
+}
+
+enum TipoHallazgo {
+  CARIES
+  OBTURACION
+  CORONA
+  ENDODONCIA
+  EXTRACCION
+  AUSENTE
+  IMPLANTE
+  PROTESIS_FIJA
+  PROTESIS_REMOVIBLE
+  FRACTURA
+  SELLADOR
+  OTRO
+}
+
+// Convención argentina: rojo = patología o por hacer, azul = existente o ya hecho.
+enum EstadoHallazgo {
+  A_REALIZAR
+  EXISTENTE
+}
+
+// Una fila por cada cosa que tiene o necesita una pieza. Solo se agrega: lo
+// resuelto o corregido se cierra con anuladoEn y queda en el historial.
+model HallazgoDental {
+  id            String           @id @default(cuid())
+  tenantId      String
+  pacienteId    String
+  profesionalId String
+  // Numeración FDI: permanentes 11-48, temporales 51-85.
+  pieza         Int
+  // Vacío = pieza entera (corona, ausente, implante...).
+  superficies   SuperficieDental[]
+  tipo          TipoHallazgo
+  estado        EstadoHallazgo
+  nota          String?
+  fecha         DateTime         @default(now())
+  anuladoEn     DateTime?
+  esDemo        Boolean          @default(false)
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  paciente    Paciente    @relation(fields: [pacienteId], references: [id], onDelete: Cascade)
+  profesional Profesional @relation(fields: [profesionalId], references: [id])
+
+  @@index([tenantId, pacienteId, pieza])
 }
