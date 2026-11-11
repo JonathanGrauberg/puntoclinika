@@ -30,6 +30,10 @@ export interface Permisos {
    * sin darle acceso a notas o diagnósticos privados.
    */
   verDocumentosPaciente: boolean;
+  /** Pedidos, laboratorios y catálogo de trabajos del consultorio dental. */
+  gestionarLaboratorio: boolean;
+  /** Solo mirar los pedidos de laboratorio. */
+  verLaboratorio: boolean;
 }
 
 const SIN_PERMISOS: Permisos = {
@@ -45,6 +49,8 @@ const SIN_PERMISOS: Permisos = {
   verHistoriaClinica: false,
   gestionarHistoriaClinica: false,
   verDocumentosPaciente: false,
+  gestionarLaboratorio: false,
+  verLaboratorio: false,
 };
 
 const MATRIZ: Record<Rol, Permisos> = {
@@ -61,6 +67,8 @@ const MATRIZ: Record<Rol, Permisos> = {
     verHistoriaClinica: true,
     gestionarHistoriaClinica: true,
     verDocumentosPaciente: true,
+    gestionarLaboratorio: true,
+    verLaboratorio: true,
   },
   SECRETARIA: {
     gestionarPacientes: true,
@@ -75,6 +83,8 @@ const MATRIZ: Record<Rol, Permisos> = {
     verHistoriaClinica: false,
     gestionarHistoriaClinica: false,
     verDocumentosPaciente: true,
+    gestionarLaboratorio: true,
+    verLaboratorio: true,
   },
   MEDICO: {
     gestionarPacientes: true,
@@ -89,6 +99,8 @@ const MATRIZ: Record<Rol, Permisos> = {
     verHistoriaClinica: true,
     gestionarHistoriaClinica: true,
     verDocumentosPaciente: true,
+    gestionarLaboratorio: true,
+    verLaboratorio: true,
   },
   AUDITOR: {
     gestionarPacientes: false,
@@ -103,6 +115,8 @@ const MATRIZ: Record<Rol, Permisos> = {
     verHistoriaClinica: true,
     gestionarHistoriaClinica: false,
     verDocumentosPaciente: true,
+    gestionarLaboratorio: false,
+    verLaboratorio: true,
   },
 };
 

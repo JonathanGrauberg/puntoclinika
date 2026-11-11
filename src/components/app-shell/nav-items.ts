@@ -3,6 +3,7 @@ import {
   CalendarDays,
   DoorOpen,
   FileImage,
+  FlaskConical,
   HeartPulse,
   LayoutDashboard,
   Receipt,
@@ -35,6 +36,13 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/estudios", label: "Estudios", icon: FileImage, modulo: "ESTUDIOS" },
   { href: "/facturacion", label: "Facturación", icon: Receipt, modulo: "FACTURACION" },
   { href: "/obras-sociales", label: "Obras Sociales", icon: HeartPulse, modulo: "OBRAS_SOCIALES" },
+  {
+    href: "/laboratorio",
+    label: "Laboratorio",
+    icon: FlaskConical,
+    modulo: "LABORATORIO",
+    requierePermiso: "verLaboratorio",
+  },
 ];
 
 export const NAV_ITEMS_SECONDARY: NavItem[] = [

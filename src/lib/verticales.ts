@@ -28,7 +28,7 @@ export const VERTICALES: Record<TipoCentro, Vertical> = {
     etiqueta: "Odontólogo",
     // ODONTOGRAMA todavía no tiene pantalla (fase B): se deja prendido para que
     // los consultorios que se registren ahora lo reciban sin tocarles nada.
-    modulos: ["PACIENTES", "TURNOS", "FACTURACION", "OBRAS_SOCIALES", "ODONTOGRAMA"],
+    modulos: ["PACIENTES", "TURNOS", "FACTURACION", "OBRAS_SOCIALES", "ODONTOGRAMA", "LABORATORIO"],
     profesional: "Odontólogo",
     dniObligatorio: false,
     practicasIniciales: [

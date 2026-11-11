@@ -39,6 +39,8 @@ model Tenant {
   // Fin de la prueba gratis (se fija al registrarse solo). La suscripción
   // completa llega en la fase D.
   trialHasta          DateTime?
+  // Cuándo se cargó el catálogo de ejemplos de trabajos de laboratorio (una sola vez).
+  catalogoLabCargadoEn DateTime?
   terminosAceptadosEn DateTime?
   terminosVersion     String?
   createdAt DateTime @default(now())
@@ -56,6 +58,8 @@ model Tenant {
   estudioInformes       EstudioInforme[]
   estudioFirmas         EstudioFirma[]
   hallazgosDentales     HallazgoDental[]
+  tiposTrabajo          TipoTrabajo[]
+  laboratorios          Laboratorio[]
   facturas              Factura[]
   auditLogs             AuditLog[]
   pacientePortales      PacientePortal[]
@@ -156,6 +160,7 @@ enum ModuloKey {
   OBRAS_SOCIALES
   PORTAL_PACIENTE
   ODONTOGRAMA
+  LABORATORIO
   RECETAS_INFORMES
   REPORTES
   INTEGRACIONES_DICOM
@@ -664,4 +669,46 @@ model HallazgoDental {
   profesional Profesional @relation(fields: [profesionalId], references: [id])
 
   @@index([tenantId, pacienteId, pieza])
+}
+
+// ---------------------------------------------------------------------------
+// Laboratorio dental (fase C del vertical dental)
+// ---------------------------------------------------------------------------
+
+// Laboratorio al que el consultorio le manda trabajos. Es un contacto del
+// consultorio, no un usuario: el laboratorio entra por un link mágico (C4).
+model Laboratorio {
+  id             String   @id @default(cuid())
+  tenantId       String
+  nombre         String
+  contacto       String?
+  telefono       String?
+  email          String?
+  // Texto libre: "zirconio", "ortodoncia", "prótesis removible"...
+  especialidades String[]
+  notas          String?
+  activo         Boolean  @default(true)
+  esDemo         Boolean  @default(false)
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tiposTrabajo TipoTrabajo[]
+
+  @@index([tenantId])
+}
+
+// Catálogo de trabajos que el consultorio pide al laboratorio. Arranca con
+// ejemplos (sin precios) y cada consultorio los edita, borra o agrega.
+model TipoTrabajo {
+  id            String  @id @default(cuid())
+  tenantId      String
+  nombre        String
+  categoria     String
+  // Laboratorio al que se lo pedís siempre (se completa solo al hacer el pedido).
+  laboratorioId String?
+  activo        Boolean @default(true)
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  laboratorio Laboratorio? @relation(fields: [laboratorioId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, categoria])
 }
