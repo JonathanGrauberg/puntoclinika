@@ -28,6 +28,7 @@ export interface LaboratorioVisto {
   email: string | null;
   especialidades: string[];
   notas: string | null;
+  numeroCliente: string | null;
   activo: boolean;
   trabajos: number;
 }
@@ -75,6 +76,7 @@ export async function obtenerCatalogoLaboratorio() {
         email: l.email,
         especialidades: l.especialidades,
         notas: l.notas,
+        numeroCliente: l.numeroCliente,
         activo: l.activo,
         trabajos: l._count.tiposTrabajo,
       })),
@@ -183,6 +185,7 @@ const laboratorioSchema = z.object({
     .refine((v) => v === null || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "El email no parece válido"),
   especialidades: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
   notas: textoOpcional(500),
+  numeroCliente: textoOpcional(30),
   activo: z.boolean().default(true),
 });
 

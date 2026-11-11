@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { ImprimirButton } from "@/components/historia-clinica/imprimir-button";
+import { obtenerEnlacePedido } from "@/lib/actions/pedido-enlace";
 import { obtenerPedido } from "@/lib/actions/pedidos-laboratorio";
 import { formatFechaArgentina } from "@/lib/date-utils";
 import { numeroPedido, textoPiezas } from "@/lib/pedidos-lab";
@@ -26,12 +27,12 @@ export default async function ImprimirPedidoPage({ params }: { params: Promise<{
   }
   if (!session.tenantId) redirect("/login");
 
-  const base = process.env.AUTH_URL ?? "";
-  const qr = await QRCode.toString(`${base}/laboratorio/pedidos/${pedido.id}`, {
-    type: "svg",
-    margin: 0,
-    errorCorrectionLevel: "M",
-  });
+  // El QR lleva al link del laboratorio (sin cuenta). Si está vencido o desactivado, no se imprime uno que no funciona.
+  const enlace = await obtenerEnlacePedido(pedido.id);
+  const qr =
+    enlace?.estado === "vigente"
+      ? await QRCode.toString(enlace.url, { type: "svg", margin: 0, errorCorrectionLevel: "M" })
+      : null;
 
   return (
     <div className="min-h-screen bg-white p-6 text-neutral-900 print:p-0">
@@ -46,16 +47,25 @@ export default async function ImprimirPedidoPage({ params }: { params: Promise<{
             <h1 className="text-2xl font-bold">Orden de trabajo</h1>
             <p className="text-lg font-bold">{numeroPedido(pedido.numero)}</p>
           </div>
-          <div
-            className="h-28 w-28 shrink-0 [&>svg]:h-full [&>svg]:w-full"
-            dangerouslySetInnerHTML={{ __html: qr }}
-            aria-label="Código QR del pedido"
-          />
+          {qr ? (
+            <div
+              className="h-28 w-28 shrink-0 [&>svg]:h-full [&>svg]:w-full"
+              dangerouslySetInnerHTML={{ __html: qr }}
+              aria-label="Código QR del pedido"
+            />
+          ) : (
+            <p className="w-40 text-right text-xs text-neutral-500 print:hidden">
+              Sin QR: el link del laboratorio está vencido o desactivado. Renovalo desde el pedido.
+            </p>
+          )}
         </div>
 
         <dl className="mt-2">
           <Fila etiqueta="Fecha">{formatFechaArgentina(pedido.creadoEn, { dateStyle: "long" })}</Fila>
           <Fila etiqueta="Laboratorio">{pedido.laboratorio.nombre}</Fila>
+          {pedido.laboratorio.numeroCliente && (
+            <Fila etiqueta="N° de cliente">{pedido.laboratorio.numeroCliente}</Fila>
+          )}
           <Fila etiqueta="Paciente">
             {pedido.paciente.apellido}, {pedido.paciente.nombre}
           </Fila>

@@ -76,3 +76,45 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
     console.error("[email] error enviando reset de contraseña", err);
   }
 }
+
+function escaparHtml(s: string) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+export async function sendEnlaceLaboratorioEmail(p: {
+  to: string;
+  laboratorio: string;
+  consultorio: string;
+  trabajo: string;
+  numero: number;
+  url: string;
+}) {
+  const client = getResendClient();
+  if (!client) return;
+
+  const html = emailShell(`
+    <h1 style="font-size:16px; color:#15171C; margin:0 0 12px;">Nuevo trabajo de ${escaparHtml(p.consultorio)}</h1>
+    <p style="font-size:13.5px; color:#4B4F57; line-height:1.7; margin:0 0 20px;">
+      Hola ${escaparHtml(p.laboratorio)}, te mandaron el pedido <b>#${String(p.numero).padStart(4, "0")}</b>: ${escaparHtml(p.trabajo)}.
+      Con este botón ves los detalles, bajás los archivos y avisás cómo va el trabajo. No necesitás cuenta.
+    </p>
+    <a href="${p.url}"
+      style="display:inline-block; background:#15171C; color:#FFFFFF; text-decoration:none; font-size:13.5px; font-weight:600; padding:11px 22px; border-radius:8px;">
+      Ver el pedido
+    </a>
+    <p style="font-size:12px; color:#9297A2; line-height:1.7; margin-top:20px;">
+      Este link es solo para este pedido y vence en unos días.
+    </p>
+  `);
+
+  try {
+    await client.emails.send({
+      from: EMAIL_FROM,
+      to: p.to,
+      subject: `Nuevo trabajo de ${p.consultorio} — pedido #${String(p.numero).padStart(4, "0")}`,
+      html,
+    });
+  } catch (err) {
+    console.error("[email] error enviando el link del pedido", err);
+  }
+}

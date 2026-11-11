@@ -4,7 +4,9 @@ import { AlertTriangle, ArrowLeft, Phone, Printer } from "lucide-react";
 import { PageTitle } from "@/components/app-shell/page-title-context";
 import { PedidoAcciones } from "@/components/laboratorio/pedido-acciones";
 import { PedidoArchivos } from "@/components/laboratorio/pedido-archivos";
+import { PedidoEnlaceCard } from "@/components/laboratorio/pedido-enlace-card";
 import { PedidoMensajes } from "@/components/laboratorio/pedido-mensajes";
+import { obtenerEnlacePedido } from "@/lib/actions/pedido-enlace";
 import { obtenerPedido } from "@/lib/actions/pedidos-laboratorio";
 import { formatFechaArgentina, formatFechaHoraArgentina, hoyArgentina } from "@/lib/date-utils";
 import { ESTADOS_PEDIDO, estaAtrasado, numeroPedido, textoPiezas } from "@/lib/pedidos-lab";
@@ -31,6 +33,7 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
   }
 
   const puedeGestionar = permisosDe(session.rol).gestionarLaboratorio;
+  const enlace = puedeGestionar ? await obtenerEnlacePedido(pedido.id) : null;
   const atrasado = estaAtrasado(pedido.estado, pedido.fechaEntrega, hoyArgentina());
 
   return (
@@ -75,6 +78,9 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
             </Dato>
             <Dato etiqueta="Laboratorio">
               <span className="font-semibold">{pedido.laboratorio.nombre}</span>
+              {pedido.laboratorio.numeroCliente && (
+                <span className="block text-sm text-muted-foreground">Tu número: {pedido.laboratorio.numeroCliente}</span>
+              )}
               {pedido.laboratorio.telefono && (
                 <a
                   href={`tel:${pedido.laboratorio.telefono}`}
@@ -100,6 +106,15 @@ export default async function PedidoPage({ params }: { params: Promise<{ id: str
         </section>
 
         {puedeGestionar && <PedidoAcciones pedidoId={pedido.id} estado={pedido.estado} />}
+
+        {puedeGestionar && (
+          <PedidoEnlaceCard
+            pedidoId={pedido.id}
+            enlace={enlace}
+            laboratorio={{ nombre: pedido.laboratorio.nombre, email: pedido.laboratorio.email }}
+            textoPedido={`${numeroPedido(pedido.numero)} (${pedido.trabajo})`}
+          />
+        )}
 
         <PedidoArchivos pedidoId={pedido.id} archivos={pedido.archivos} puedeEditar={puedeGestionar} />
 

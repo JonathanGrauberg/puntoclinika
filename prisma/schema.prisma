@@ -64,6 +64,7 @@ model Tenant {
   pedidoEstados         PedidoEstado[]
   pedidoMensajes        PedidoMensaje[]
   pedidoArchivos        PedidoArchivo[]
+  pedidoEnlaces         PedidoEnlace[]
   facturas              Factura[]
   auditLogs             AuditLog[]
   pacientePortales      PacientePortal[]
@@ -692,6 +693,8 @@ model Laboratorio {
   // Texto libre: "zirconio", "ortodoncia", "prótesis removible"...
   especialidades String[]
   notas          String?
+  // El número que ese laboratorio le asignó a este consultorio (su casillero o número de cliente). Es por odontólogo, no por paciente.
+  numeroCliente  String?
   activo         Boolean  @default(true)
   esDemo         Boolean  @default(false)
 
@@ -763,6 +766,7 @@ model PedidoLaboratorio {
   estados     PedidoEstado[]
   mensajes    PedidoMensaje[]
   archivos    PedidoArchivo[]
+  enlaces     PedidoEnlace[]
 
   @@unique([tenantId, numero])
   @@index([tenantId, estado])
@@ -819,4 +823,24 @@ model PedidoArchivo {
   pedido PedidoLaboratorio @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
 
   @@index([pedidoId, creadoEn])
+}
+
+// Link mágico para que el laboratorio vea UN pedido sin tener cuenta. Tabla puente
+// sin RLS (como DocumentoCompartido): el token resuelve el consultorio y recién ahí
+// se entra con contexto real. Revocable y con vencimiento.
+model PedidoEnlace {
+  id            String    @id @default(cuid())
+  tenantId      String
+  pedidoId      String
+  token         String    @unique
+  venceEn       DateTime
+  revocadoEn    DateTime?
+  usos          Int       @default(0)
+  ultimoUsoEn   DateTime?
+  creadoEn      DateTime  @default(now())
+
+  tenant Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pedido PedidoLaboratorio @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  @@index([pedidoId])
 }

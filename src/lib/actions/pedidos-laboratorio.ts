@@ -8,6 +8,7 @@ import { withTenantContext, type TenantClient } from "@/lib/tenant-context";
 import { audit, auditView } from "@/lib/audit";
 import { permisosDe } from "@/lib/permissions";
 import { hasModule } from "@/lib/modules";
+import { crearEnlaceParaPedido } from "@/lib/pedido-enlace";
 import { inicioDiaArgentina } from "@/lib/date-utils";
 import {
   EXTENSIONES_ARCHIVO_PEDIDO,
@@ -37,7 +38,7 @@ export interface PedidoDetalle extends PedidoResumen {
   notas: string | null;
   entregadoEn: Date | null;
   paciente: { id: string; nombre: string; apellido: string; telefono: string | null };
-  laboratorio: { id: string; nombre: string; telefono: string | null; email: string | null };
+  laboratorio: { id: string; nombre: string; telefono: string | null; email: string | null; numeroCliente: string | null };
   estados: { id: string; estado: EstadoPedidoLab; nota: string | null; autor: string; autorTipo: string; creadoEn: Date }[];
   mensajes: { id: string; autorTipo: string; autorNombre: string; texto: string; creadoEn: Date }[];
   archivos: { id: string; nombre: string; contentType: string; tamano: number; subidoPor: string; autorTipo: string; creadoEn: Date }[];
@@ -108,7 +109,7 @@ export async function obtenerPedido(id: string): Promise<PedidoDetalle | null> {
         notas: true,
         entregadoEn: true,
         paciente: { select: { id: true, nombre: true, apellido: true, telefono: true } },
-        laboratorio: { select: { id: true, nombre: true, telefono: true, email: true } },
+        laboratorio: { select: { id: true, nombre: true, telefono: true, email: true, numeroCliente: true } },
         estados: { orderBy: { creadoEn: "asc" } },
         mensajes: { orderBy: { creadoEn: "asc" } },
         archivos: {
@@ -193,6 +194,8 @@ export async function crearPedido(input: z.input<typeof pedidoSchema>): Promise<
       },
       select: { id: true },
     });
+    // El link del laboratorio nace con el pedido: así la orden impresa ya trae su QR.
+    await crearEnlaceParaPedido(tx, s.tenantId, pedido.id);
     await audit(tx, {
       tenantId: s.tenantId,
       userId: s.userId,

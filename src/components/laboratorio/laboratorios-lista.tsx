@@ -24,6 +24,7 @@ interface Borrador {
   email: string;
   especialidades: string[];
   notas: string;
+  numeroCliente: string;
   activo: boolean;
 }
 
@@ -34,6 +35,7 @@ const VACIO: Borrador = {
   email: "",
   especialidades: [],
   notas: "",
+  numeroCliente: "",
   activo: true,
 };
 
@@ -55,6 +57,7 @@ function Formulario({
           email: laboratorio.email ?? "",
           especialidades: laboratorio.especialidades,
           notas: laboratorio.notas ?? "",
+          numeroCliente: laboratorio.numeroCliente ?? "",
           activo: laboratorio.activo,
         }
       : VACIO
@@ -84,6 +87,7 @@ function Formulario({
         email: b.email,
         especialidades: b.especialidades,
         notas: b.notas,
+        numeroCliente: b.numeroCliente,
         activo: b.activo,
       };
       const r = laboratorio ? await actualizarLaboratorio(laboratorio.id, datos) : await crearLaboratorio(datos);
@@ -128,6 +132,15 @@ function Formulario({
           />
         </label>
       </div>
+      <label className="flex flex-col gap-1 text-sm font-semibold text-foreground">
+        Tu número en este laboratorio (casillero o número de cliente)
+        <input
+          className={input}
+          value={b.numeroCliente}
+          onChange={(e) => setB({ ...b, numeroCliente: e.target.value })}
+          placeholder="Ej: 14"
+        />
+      </label>
       <label className="flex flex-col gap-1 text-sm font-semibold text-foreground">
         Email
         <input className={input} type="email" value={b.email} onChange={(e) => setB({ ...b, email: e.target.value })} />
@@ -322,6 +335,11 @@ export function LaboratoriosLista({
                     </span>
                   ))}
                 </div>
+              )}
+              {l.numeroCliente && (
+                <p className="mt-2 text-sm text-foreground">
+                  Tu número: <b>{l.numeroCliente}</b>
+                </p>
               )}
               <p className="mt-3 text-xs text-muted-foreground">
                 {l.trabajos === 0
