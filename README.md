@@ -73,6 +73,14 @@ npm run db:seed
 Crea un tenant `demo` con los módulos base activados y un usuario
 `admin@demo.clinika` / `changeme123`.
 
+Para entrar al **panel del dueño** (`/dueno`: cuentas, módulos, planes y precios) hay que
+marcar tu usuario como dueño, y solo se puede hacer desde acá (con acceso a la base):
+
+```bash
+npm run dueno -- tu@email.com           # da el permiso
+npm run dueno -- tu@email.com --quitar  # lo retira
+```
+
 ### 4. Dev server
 
 ```bash

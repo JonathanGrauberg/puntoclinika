@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import type { ModuloKey } from "@prisma/client";
-import { Building2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Building2, Crown, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { NAV_ITEMS, NAV_ITEMS_SECONDARY, type NavItem } from "./nav-items";
 import { NavLink } from "./nav-link";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -15,6 +15,7 @@ interface SidebarProps {
   tenantName: string;
   enabledModules: ModuloKey[];
   rol: string;
+  esDueno?: boolean;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
   onNavigate?: () => void;
@@ -24,6 +25,7 @@ export function Sidebar({
   tenantName,
   enabledModules,
   rol,
+  esDueno,
   collapsed = false,
   onToggleCollapsed,
   onNavigate,
@@ -39,7 +41,10 @@ export function Sidebar({
     (!item.modulo || enabledModules.includes(item.modulo)) &&
     (!item.requierePermiso || permisos[item.requierePermiso]);
   const visibleItems = NAV_ITEMS.filter(esVisible);
-  const visibleSecondary = NAV_ITEMS_SECONDARY.filter(esVisible);
+  const visibleSecondary = [
+    ...NAV_ITEMS_SECONDARY.filter(esVisible),
+    ...(esDueno ? [{ href: "/dueno", label: "Panel del dueño", icon: Crown } satisfies NavItem] : []),
+  ];
 
   return (
     <aside className="flex h-full flex-col gap-4 border-r border-border bg-card p-3">

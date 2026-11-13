@@ -14,12 +14,13 @@ interface ShellProps {
   userName: string;
   rol: string;
   enabledModules: ModuloKey[];
+  esDueno?: boolean;
   children: React.ReactNode;
 }
 
 const COLLAPSE_KEY = "clinika:sidebar-collapsed";
 
-export function Shell({ tenantName, userName, rol, enabledModules, children }: ShellProps) {
+export function Shell({ tenantName, userName, rol, enabledModules, esDueno, children }: ShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -53,6 +54,7 @@ export function Shell({ tenantName, userName, rol, enabledModules, children }: S
               tenantName={tenantName}
               enabledModules={enabledModules}
               rol={rol}
+              esDueno={esDueno}
               collapsed={collapsed}
               onToggleCollapsed={toggleCollapsed}
             />
@@ -78,6 +80,7 @@ export function Shell({ tenantName, userName, rol, enabledModules, children }: S
                   tenantName={tenantName}
                   enabledModules={enabledModules}
                   rol={rol}
+                  esDueno={esDueno}
                   onNavigate={() => setMobileOpen(false)}
                 />
               </div>

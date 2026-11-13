@@ -10,7 +10,8 @@
     "postinstall": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed-dental": "tsx prisma/seed-dental.ts"
+    "db:seed-dental": "tsx prisma/seed-dental.ts",
+    "dueno": "tsx --env-file=.env prisma/dueno.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

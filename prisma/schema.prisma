@@ -41,6 +41,10 @@ model Tenant {
   trialHasta          DateTime?
   // Cuándo se cargó el catálogo de ejemplos de trabajos de laboratorio (una sola vez).
   catalogoLabCargadoEn DateTime?
+  // Plan cerrado que se le vendió (null = módulos sueltos). Lo gestiona el dueño de la app.
+  planId               String?
+  notasInternas        String?
+  plan                 Plan?    @relation(fields: [planId], references: [id], onDelete: SetNull)
   terminosAceptadosEn DateTime?
   terminosVersion     String?
   createdAt DateTime @default(now())
@@ -81,6 +85,8 @@ model User {
   activo       Boolean  @default(true)
   // null = todavía no confirmó su mail (aviso suave, no bloquea el uso).
   emailVerificadoEn DateTime?
+  // Dueño de la plataforma: puede entrar al panel /dueno. Se asigna con npm run dueno, nunca desde la app.
+  esDueno      Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   memberships         Membership[]
@@ -843,4 +849,32 @@ model PedidoEnlace {
   pedido PedidoLaboratorio @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
 
   @@index([pedidoId])
+}
+
+// ---------------------------------------------------------------------------
+// Catálogo comercial (lo administra el dueño de la app; sin RLS: es global)
+// ---------------------------------------------------------------------------
+
+// Cuánto vale cada módulo suelto.
+model ModuloCatalogo {
+  modulo        ModuloKey @id
+  nombre        String
+  descripcion   String
+  precioMensual Decimal   @default(0) @db.Decimal(10, 2)
+  // Si se puede vender suelto (si no, solo viene dentro de un plan).
+  vendible      Boolean   @default(true)
+}
+
+// Plan cerrado: un precio que incluye un conjunto de módulos, para un tipo de cuenta.
+model Plan {
+  id            String      @id @default(cuid())
+  nombre        String
+  tipo          TipoCentro
+  descripcion   String      @default("")
+  precioMensual Decimal     @default(0) @db.Decimal(10, 2)
+  modulos       ModuloKey[]
+  activo        Boolean     @default(true)
+  orden         Int         @default(0)
+
+  tenants Tenant[]
 }
